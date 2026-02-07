@@ -1,0 +1,16 @@
+{
+  "name": "armandofront",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Stock - Aplicación de Escritorio",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --debug"
+  },
+  "keywords": ["electron", "stock", "inventario"],
+  "author": "Gabriel",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}
