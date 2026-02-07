@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ventas - Llantería</title>
+    <link rel="stylesheet" href="css/ventas.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🛞 Sistema de Ventas - Llantería</h1>
+            <div class="header-actions">
+                <button id="btn-back" class="btn btn-secondary">← Volver al Inventario</button>
+                <button id="btn-ver-ventas" class="btn btn-info">📊 Ver Ventas del Día</button>
+            </div>
+        </header>
+
+        <!-- Información del Cliente -->
+        <div class="cliente-section">
+            <h2>Datos del Cliente</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="input-cliente" placeholder="Nombre del cliente (opcional)">
+                </div>
+                <div class="form-group">
+                    <label>DNI/RUC</label>
+                    <input type="text" id="input-documento" placeholder="Documento (opcional)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Selección de Productos/Servicios -->
+        <div class="productos-section">
+            <h2>Agregar Productos y Servicios</h2>
+            
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="productos">🛞 Productos (Llantas)</button>
+                <button class="tab" data-tab="servicios">🔧 Servicios</button>
+            </div>
+
+            <!-- Tab Productos -->
+            <div id="tab-productos" class="tab-content active">
+                <div class="search-section">
+                    <input type="text" id="search-producto" placeholder="🔍 Buscar producto por código o nombre..." class="search-input">
+                    <select id="categoria-filter" class="filter-select">
+                        <option value="">Todas las Categorías</option>
+                    </select>
+                </div>
+                
+                <div class="productos-grid" id="productos-grid">
+                    <div class="loading">Cargando productos...</div>
+                </div>
+            </div>
+
+            <!-- Tab Servicios -->
+            <div id="tab-servicios" class="tab-content">
+                <div class="servicios-predefinidos">
+                    <div class="servicio-card" data-servicio="ALINEACION" data-precio="50">
+                        <div class="servicio-icon">⚖️</div>
+                        <h3>Alineación</h3>
+                        <p class="precio">S/ 50.00</p>
+                        <button class="btn btn-primary btn-agregar-servicio">Agregar</button>
+                    </div>
+                    <div class="servicio-card" data-servicio="BALANCEO" data-precio="40">
+                        <div class="servicio-icon">⚡</div>
+                        <h3>Balanceo</h3>
+                        <p class="precio">S/ 40.00</p>
+                        <button class="btn btn-primary btn-agregar-servicio">Agregar</button>
+                    </div>
+                    <div class="servicio-card" data-servicio="ROTACION" data-precio="30">
+                        <div class="servicio-icon">🔄</div>
+                        <h3>Rotación de Llantas</h3>
+                        <p class="precio">S/ 30.00</p>
+                        <button class="btn btn-primary btn-agregar-servicio">Agregar</button>
+                    </div>
+                    <div class="servicio-card" data-servicio="PARCHADO" data-precio="25">
+                        <div class="servicio-icon">🔧</div>
+                        <h3>Parchado</h3>
+                        <p class="precio">S/ 25.00</p>
+                        <button class="btn btn-primary btn-agregar-servicio">Agregar</button>
+                    </div>
+                    <div class="servicio-card" data-servicio="CAMBIO_VALVULA" data-precio="15">
+                        <div class="servicio-icon">🔩</div>
+                        <h3>Cambio de Válvula</h3>
+                        <p class="precio">S/ 15.00</p>
+                        <button class="btn btn-primary btn-agregar-servicio">Agregar</button>
+                    </div>
+                    <div class="servicio-card" data-servicio="INSPECCION" data-precio="20">
+                        <div class="servicio-icon">🔍</div>
+                        <h3>Inspección Completa</h3>
+                        <p class="precio">S/ 20.00</p>
+                        <button class="btn btn-primary btn-agregar-servicio">Agregar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carrito de Venta -->
+        <div class="carrito-section">
+            <div class="carrito-header">
+                <h2>🛒 Carrito de Venta</h2>
+                <button id="btn-limpiar" class="btn btn-secondary">🗑️ Limpiar Todo</button>
+            </div>
+
+            <div class="carrito-items" id="carrito-items">
+                <div class="carrito-vacio">
+                    <p>El carrito está vacío</p>
+                    <p>Agrega productos o servicios para comenzar</p>
+                </div>
+            </div>
+
+            <!-- Totales -->
+            <div class="totales">
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span id="total-subtotal">S/ 0.00</span>
+                </div>
+                <div class="total-row">
+                    <span>IGV (18%):</span>
+                    <span id="total-igv">S/ 0.00</span>
+                </div>
+                <div class="total-row total-final">
+                    <span>TOTAL:</span>
+                    <span id="total-final">S/ 0.00</span>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="observaciones-section">
+                <label>Observaciones (opcional)</label>
+                <textarea id="input-observaciones" placeholder="Agregar notas sobre la venta..." rows="3"></textarea>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="action-buttons">
+                <button id="btn-vender" class="btn btn-success" disabled>
+                    💰 Procesar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Boleta -->
+    <div id="modal-boleta" class="modal hidden">
+        <div class="modal-content modal-boleta">
+            <div class="boleta-header">
+                <h2>✅ Venta Registrada</h2>
+                <button id="btn-close-boleta" class="btn-close">✕</button>
+            </div>
+            
+            <div class="boleta-content" id="boleta-content">
+                <!-- Contenido de la boleta se genera dinámicamente -->
+            </div>
+
+            <div class="boleta-actions">
+                <button id="btn-imprimir" class="btn btn-primary">🖨️ Imprimir</button>
+                <button id="btn-nueva-venta" class="btn btn-success">➕ Nueva Venta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Ventas del Día -->
+    <div id="modal-ventas-dia" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📊 Ventas del Día</h2>
+                <button id="btn-close-ventas" class="btn-close">✕</button>
+            </div>
+            
+            <div class="ventas-resumen">
+                <div class="stat-card">
+                    <h3>Total Ventas</h3>
+                    <p id="stat-cantidad-ventas" class="stat-number">0</p>
+                </div>
+                <div class="stat-card success">
+                    <h3>Monto Total</h3>
+                    <p id="stat-monto-total" class="stat-number">S/ 0.00</p>
+                </div>
+            </div>
+
+            <div class="ventas-lista" id="ventas-lista">
+                <div class="loading">Cargando ventas...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api-ventas.js"></script>
+    <script src="js/ventas.js"></script>
+</body>
+</html>

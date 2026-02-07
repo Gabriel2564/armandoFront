@@ -9,6 +9,7 @@ const btnCloseModal = document.getElementById('btn-close-modal');
 const btnCancel = document.getElementById('btn-cancel');
 const btnRefresh = document.getElementById('btn-refresh');
 const btnStockBajo = document.getElementById('btn-stock-bajo');
+const btnIrVentas = document.getElementById('btn-ir-ventas');
 const productForm = document.getElementById('product-form');
 const searchInput = document.getElementById('search-input');
 const categoryFilter = document.getElementById('category-filter');
@@ -30,6 +31,7 @@ function setupEventListeners() {
     btnCancel.addEventListener('click', closeModal);
     btnRefresh.addEventListener('click', loadProducts);
     btnStockBajo.addEventListener('click', showLowStockProducts);
+    btnIrVentas.addEventListener('click', () => window.location.href = 'ventas.html');
     productForm.addEventListener('submit', handleFormSubmit);
     searchInput.addEventListener('input', handleSearch);
     categoryFilter.addEventListener('change', handleCategoryFilter);
