@@ -3,20 +3,20 @@ const path = require('path');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
-    width: 1400,
+    width: 1600,
     height: 900,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true
     },
-    autoHideMenuBar: true, // Ocultar menú por defecto
-    title: 'Sistema de Gestión de Stock'
+    autoHideMenuBar: true,
+    title: 'Sistema de Gestión - Llantería'
   });
 
   mainWindow.loadFile('src/index.html');
 
-  // Abrir DevTools en desarrollo (descomentar si necesitas)
+  // Descomentar para debug
   // mainWindow.webContents.openDevTools();
 }
 

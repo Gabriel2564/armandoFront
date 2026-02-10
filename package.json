@@ -1,13 +1,13 @@
 {
-  "name": "armandofront",
+  "name": "gestion-stock-llanteria",
   "version": "1.0.0",
-  "description": "Sistema de Gestión de Stock - Aplicación de Escritorio",
+  "description": "Sistema de Gestión de Stock para Llantería",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --debug"
   },
-  "keywords": ["electron", "stock", "inventario"],
+  "keywords": ["electron", "stock", "llanteria"],
   "author": "Gabriel",
   "license": "MIT",
   "devDependencies": {

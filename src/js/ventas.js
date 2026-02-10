@@ -1,136 +1,78 @@
 // Estado de la aplicación
 let todosLosProductos = [];
 let carrito = [];
-let serviciosDisponibles = [
-    { nombre: 'Alineación', precio: 50, codigo: 'SERV-ALINEACION' },
-    { nombre: 'Balanceo', precio: 40, codigo: 'SERV-BALANCEO' },
-    { nombre: 'Rotación de Llantas', precio: 30, codigo: 'SERV-ROTACION' },
-    { nombre: 'Parchado', precio: 25, codigo: 'SERV-PARCHADO' },
-    { nombre: 'Cambio de Válvula', precio: 15, codigo: 'SERV-VALVULA' },
-    { nombre: 'Inspección Completa', precio: 20, codigo: 'SERV-INSPECCION' }
-];
+let precioParchadoPendiente = false;
 
 // Elementos del DOM
-const tabButtons = document.querySelectorAll('.tab');
-const tabContents = document.querySelectorAll('.tab-content');
+const btnVolver = document.getElementById('btn-volver');
+const btnVerVentas = document.getElementById('btn-ver-ventas');
+const btnLimpiar = document.getElementById('btn-limpiar');
+const btnProcesarVenta = document.getElementById('btn-procesar-venta');
+
+const searchProducto = document.getElementById('search-producto');
+const filterTipoProducto = document.getElementById('filter-tipo-producto');
 const productosGrid = document.getElementById('productos-grid');
 const carritoItems = document.getElementById('carrito-items');
-const searchProducto = document.getElementById('search-producto');
-const categoriaFilter = document.getElementById('categoria-filter');
-const btnLimpiar = document.getElementById('btn-limpiar');
-const btnVender = document.getElementById('btn-vender');
-const btnBack = document.getElementById('btn-back');
-const btnVerVentas = document.getElementById('btn-ver-ventas');
-
-const totalSubtotal = document.getElementById('total-subtotal');
-const totalIgv = document.getElementById('total-igv');
-const totalFinal = document.getElementById('total-final');
+const totalVenta = document.getElementById('total-venta');
 
 const modalBoleta = document.getElementById('modal-boleta');
 const modalVentasDia = document.getElementById('modal-ventas-dia');
+const modalPrecioParchado = document.getElementById('modal-precio-parchado');
+
 const btnCloseBoleta = document.getElementById('btn-close-boleta');
 const btnCloseVentas = document.getElementById('btn-close-ventas');
 const btnNuevaVenta = document.getElementById('btn-nueva-venta');
 const btnImprimir = document.getElementById('btn-imprimir');
+const btnConfirmarParchado = document.getElementById('btn-confirmar-parchado');
 
 // Inicializar aplicación
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarProductos();
-    await cargarCategorias();
+    await cargarTipos();
     configurarEventListeners();
 });
 
 // Configurar event listeners
 function configurarEventListeners() {
-    // Tabs
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => cambiarTab(button.dataset.tab));
-    });
-
-    // Búsqueda y filtros
-    searchProducto.addEventListener('input', filtrarProductos);
-    categoriaFilter.addEventListener('change', filtrarProductos);
-
-    // Botones principales
-    btnLimpiar.addEventListener('click', limpiarCarrito);
-    btnVender.addEventListener('click', procesarVenta);
-    btnBack.addEventListener('click', () => window.location.href = 'index.html');
+    btnVolver.addEventListener('click', () => window.location.href = 'index.html');
     btnVerVentas.addEventListener('click', mostrarVentasDelDia);
-
-    // Servicios
-    document.querySelectorAll('.btn-agregar-servicio').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.servicio-card');
-            const servicio = card.dataset.servicio;
-            const precio = parseFloat(card.dataset.precio);
-            const nombre = card.querySelector('h3').textContent;
-            agregarServicioAlCarrito(servicio, nombre, precio);
-        });
-    });
-
-    // Modales
+    btnLimpiar.addEventListener('click', limpiarCarrito);
+    btnProcesarVenta.addEventListener('click', iniciarProcesarVenta);
+    
+    searchProducto.addEventListener('input', filtrarProductos);
+    filterTipoProducto.addEventListener('change', filtrarProductos);
+    
     btnCloseBoleta.addEventListener('click', () => modalBoleta.classList.add('hidden'));
     btnCloseVentas.addEventListener('click', () => modalVentasDia.classList.add('hidden'));
     btnNuevaVenta.addEventListener('click', nuevaVenta);
     btnImprimir.addEventListener('click', imprimirBoleta);
-}
-
-// Cambiar tabs
-function cambiarTab(tabName) {
-    tabButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
-    });
-    
-    tabContents.forEach(content => {
-        content.classList.toggle('active', content.id === `tab-${tabName}`);
-    });
+    btnConfirmarParchado.addEventListener('click', confirmarPrecioParchado);
 }
 
 // Cargar productos
 async function cargarProductos() {
     try {
-        todosLosProductos = await API_VENTAS.getAllProducts();
+        todosLosProductos = await API.obtenerProductos();
         renderizarProductos(todosLosProductos);
     } catch (error) {
         console.error('Error al cargar productos:', error);
     }
 }
 
-// Cargar categorías
-async function cargarCategorias() {
+// Cargar tipos
+async function cargarTipos() {
     try {
-        const categorias = await API_VENTAS.getCategories();
-        categoriaFilter.innerHTML = '<option value="">Todas las Categorías</option>';
-        categorias.forEach(categoria => {
+        const tipos = await API.obtenerTiposProductos();
+        filterTipoProducto.innerHTML = '<option value="">Todos los Tipos</option>';
+        tipos.forEach(tipo => {
             const option = document.createElement('option');
-            option.value = categoria;
-            option.textContent = categoria;
-            categoriaFilter.appendChild(option);
+            option.value = tipo;
+            option.textContent = tipo;
+            filterTipoProducto.appendChild(option);
         });
     } catch (error) {
-        console.error('Error al cargar categorías:', error);
+        console.error('Error al cargar tipos:', error);
     }
-}
-
-// Filtrar productos
-function filtrarProductos() {
-    const searchTerm = searchProducto.value.toLowerCase();
-    const categoriaSeleccionada = categoriaFilter.value;
-
-    let productosFiltrados = todosLosProductos;
-
-    if (searchTerm) {
-        productosFiltrados = productosFiltrados.filter(p => 
-            p.codigo.toLowerCase().includes(searchTerm) ||
-            p.nombre.toLowerCase().includes(searchTerm)
-        );
-    }
-
-    if (categoriaSeleccionada) {
-        productosFiltrados = productosFiltrados.filter(p => p.categoria === categoriaSeleccionada);
-    }
-
-    renderizarProductos(productosFiltrados);
 }
 
 // Renderizar productos
@@ -141,79 +83,80 @@ function renderizarProductos(productos) {
     }
 
     productosGrid.innerHTML = productos.map(producto => {
-        const sinStock = producto.stockActual <= 0;
+        const sinStock = producto.tipo !== 'SERVICIO' && producto.stockTotalActivo <= 0;
         const stockClass = sinStock ? 'sin-stock' : '';
-        const badgeStock = sinStock 
-            ? '<span class="badge badge-danger">SIN STOCK</span>'
-            : producto.stockBajo 
-                ? '<span class="badge badge-warning">STOCK BAJO</span>'
-                : '<span class="badge badge-success">DISPONIBLE</span>';
+        const tipoBadge = obtenerBadgeTipo(producto.tipo);
+        const stockInfo = producto.tipo === 'SERVICIO' 
+            ? '' 
+            : `<div class="producto-stock">Stock: ${producto.stockTotalActivo || 0}</div>`;
+        const badgeStock = sinStock ? '<span class="badge badge-sin-stock">SIN STOCK</span>' : '';
 
         return `
-            <div class="producto-card ${stockClass}" ${!sinStock ? `onclick="agregarProductoAlCarrito(${producto.id})"` : ''}>
+            <div class="producto-card ${stockClass}" ${!sinStock ? `onclick="agregarAlCarrito(${producto.id})"` : ''}>
                 <h3>${producto.nombre}</h3>
-                <p class="producto-codigo">${producto.codigo}</p>
-                <p class="producto-precio">S/ ${producto.precioVenta.toFixed(2)}</p>
-                <p class="producto-stock">Stock: ${producto.stockActual}</p>
+                <div class="producto-codigo">${producto.codigo}</div>
+                ${tipoBadge}
+                <div class="producto-precio">S/ ${formatearPrecio(producto.precioVenta)}</div>
+                ${stockInfo}
                 ${badgeStock}
             </div>
         `;
     }).join('');
 }
 
-// Agregar producto al carrito
-function agregarProductoAlCarrito(productoId) {
+// Filtrar productos
+function filtrarProductos() {
+    const termino = searchProducto.value.toLowerCase();
+    const tipoSeleccionado = filterTipoProducto.value;
+
+    let productosFiltrados = todosLosProductos;
+
+    if (termino) {
+        productosFiltrados = productosFiltrados.filter(p =>
+            p.codigo.toLowerCase().includes(termino) ||
+            p.nombre.toLowerCase().includes(termino)
+        );
+    }
+
+    if (tipoSeleccionado) {
+        productosFiltrados = productosFiltrados.filter(p => p.tipo === tipoSeleccionado);
+    }
+
+    renderizarProductos(productosFiltrados);
+}
+
+// Agregar al carrito
+function agregarAlCarrito(productoId) {
     const producto = todosLosProductos.find(p => p.id === productoId);
     
-    if (!producto || producto.stockActual <= 0) {
-        alert('Producto sin stock');
+    if (!producto) return;
+    
+    // Verificar stock si no es servicio
+    if (producto.tipo !== 'SERVICIO' && producto.stockTotalActivo <= 0) {
+        alert('Producto sin stock disponible');
         return;
     }
 
     // Verificar si ya está en el carrito
-    const itemExistente = carrito.find(item => item.productoId === productoId && !item.esServicio);
+    const itemExistente = carrito.find(item => item.productoId === productoId);
     
     if (itemExistente) {
-        // Verificar que no exceda el stock
-        if (itemExistente.cantidad + 1 > producto.stockActual) {
-            alert(`Stock insuficiente. Disponible: ${producto.stockActual}`);
+        // Verificar límite de stock
+        if (producto.tipo !== 'SERVICIO' && itemExistente.cantidad + 1 > producto.stockTotalActivo) {
+            alert(`Stock insuficiente. Disponible: ${producto.stockTotalActivo}`);
             return;
         }
         itemExistente.cantidad++;
     } else {
         carrito.push({
             productoId: producto.id,
-            nombre: producto.nombre,
             codigo: producto.codigo,
+            nombre: producto.nombre,
+            tipo: producto.tipo,
             precioUnitario: producto.precioVenta,
             cantidad: 1,
-            esServicio: false,
-            stockDisponible: producto.stockActual
-        });
-    }
-
-    actualizarCarrito();
-}
-
-// Agregar servicio al carrito
-function agregarServicioAlCarrito(codigo, nombre, precio) {
-    // Verificar si ya está en el carrito
-    const itemExistente = carrito.find(item => item.codigo === codigo && item.esServicio);
-    
-    if (itemExistente) {
-        itemExistente.cantidad++;
-    } else {
-        // Crear un ID temporal para servicios (negativo para diferenciar)
-        const servicioId = -carrito.filter(i => i.esServicio).length - 1;
-        
-        carrito.push({
-            productoId: servicioId,
-            nombre: nombre,
-            codigo: codigo,
-            precioUnitario: precio,
-            cantidad: 1,
-            esServicio: true,
-            descripcion: nombre
+            esServicio: producto.tipo === 'SERVICIO',
+            stockDisponible: producto.stockTotalActivo
         });
     }
 
@@ -226,15 +169,15 @@ function actualizarCarrito() {
         carritoItems.innerHTML = `
             <div class="carrito-vacio">
                 <p>El carrito está vacío</p>
-                <p>Agrega productos o servicios para comenzar</p>
+                <p>Selecciona productos para comenzar</p>
             </div>
         `;
-        btnVender.disabled = true;
+        btnProcesarVenta.disabled = true;
     } else {
         carritoItems.innerHTML = carrito.map((item, index) => {
             const subtotal = item.precioUnitario * item.cantidad;
-            const tipoClass = item.esServicio ? 'servicio' : 'producto';
-            const tipoLabel = item.esServicio ? 'Servicio' : 'Producto';
+            const tipoClass = item.tipo.toLowerCase();
+            const tipoLabel = item.tipo;
 
             return `
                 <div class="carrito-item">
@@ -242,31 +185,28 @@ function actualizarCarrito() {
                         <div class="item-nombre">${item.nombre}</div>
                         <div class="item-codigo">${item.codigo}</div>
                         <span class="item-tipo ${tipoClass}">${tipoLabel}</span>
-                        ${!item.esServicio ? `<div style="font-size: 11px; color: #999; margin-top: 3px;">Stock disponible: ${item.stockDisponible}</div>` : ''}
                     </div>
                     
                     <div class="item-cantidad">
                         <button class="btn-cantidad" onclick="cambiarCantidad(${index}, -1)">-</button>
-                        <input type="number" class="cantidad-input" value="${item.cantidad}" 
-                               onchange="actualizarCantidadDirecta(${index}, this.value)" min="1"
-                               ${!item.esServicio ? `max="${item.stockDisponible}"` : ''}>
+                        <span class="cantidad-valor">${item.cantidad}</span>
                         <button class="btn-cantidad" onclick="cambiarCantidad(${index}, 1)">+</button>
                     </div>
                     
                     <div class="item-precio">
-                        <div class="precio-unitario">S/ ${item.precioUnitario.toFixed(2)} c/u</div>
-                        <div class="precio-subtotal">S/ ${subtotal.toFixed(2)}</div>
+                        <div class="precio-unitario">S/ ${formatearPrecio(item.precioUnitario)} c/u</div>
+                        <div class="precio-subtotal">S/ ${formatearPrecio(subtotal)}</div>
                     </div>
                     
-                    <button class="btn-eliminar" onclick="eliminarDelCarrito(${index})">🗑️</button>
+                    <button class="btn-eliminar-item" onclick="eliminarDelCarrito(${index})">🗑️</button>
                 </div>
             `;
         }).join('');
         
-        btnVender.disabled = false;
+        btnProcesarVenta.disabled = false;
     }
 
-    calcularTotales();
+    calcularTotal();
 }
 
 // Cambiar cantidad
@@ -279,30 +219,13 @@ function cambiarCantidad(index, cambio) {
         return;
     }
 
-    // Verificar stock si es producto
+    // Verificar stock si no es servicio
     if (!item.esServicio && nuevaCantidad > item.stockDisponible) {
         alert(`Stock insuficiente. Disponible: ${item.stockDisponible}`);
         return;
     }
 
     item.cantidad = nuevaCantidad;
-    actualizarCarrito();
-}
-
-// Actualizar cantidad directamente
-function actualizarCantidadDirecta(index, valor) {
-    const cantidad = parseInt(valor);
-    const item = carrito[index];
-
-    if (isNaN(cantidad) || cantidad < 1) {
-        item.cantidad = 1;
-    } else if (!item.esServicio && cantidad > item.stockDisponible) {
-        alert(`Stock insuficiente. Disponible: ${item.stockDisponible}`);
-        item.cantidad = item.stockDisponible;
-    } else {
-        item.cantidad = cantidad;
-    }
-
     actualizarCarrito();
 }
 
@@ -316,67 +239,105 @@ function eliminarDelCarrito(index) {
 function limpiarCarrito() {
     if (carrito.length === 0) return;
     
-    if (confirm('¿Estás seguro de limpiar todo el carrito?')) {
+    if (confirm('¿Desea limpiar todo el carrito?')) {
         carrito = [];
         document.getElementById('input-cliente').value = '';
-        document.getElementById('input-documento').value = '';
         document.getElementById('input-observaciones').value = '';
         actualizarCarrito();
     }
 }
 
-// Calcular totales
-function calcularTotales() {
-    const subtotal = carrito.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0);
-    const igv = subtotal * 0.18;
-    const total = subtotal + igv;
-
-    totalSubtotal.textContent = `S/ ${subtotal.toFixed(2)}`;
-    totalIgv.textContent = `S/ ${igv.toFixed(2)}`;
-    totalFinal.textContent = `S/ ${total.toFixed(2)}`;
+// Calcular total
+function calcularTotal() {
+    const total = carrito.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0);
+    totalVenta.textContent = `S/ ${formatearPrecio(total)}`;
 }
 
-// Procesar venta
-async function procesarVenta() {
+// Iniciar proceso de venta
+function iniciarProcesarVenta() {
     if (carrito.length === 0) {
         alert('El carrito está vacío');
         return;
     }
 
-    const cliente = document.getElementById('input-cliente').value.trim();
-    const documento = document.getElementById('input-documento').value.trim();
+    // Verificar si hay parches y NO hay servicio de parchado
+    const hayParches = carrito.some(item => item.tipo === 'PARCHE');
+    const hayParchado = carrito.some(item => item.codigo === 'SERV-PARCHADO');
+
+    if (hayParches && !hayParchado) {
+        // Mostrar modal para precio de parchado
+        precioParchadoPendiente = true;
+        document.getElementById('input-precio-parchado').value = '';
+        modalPrecioParchado.classList.remove('hidden');
+    } else {
+        // Procesar venta directamente
+        procesarVenta();
+    }
+}
+
+// Confirmar precio de parchado
+function confirmarPrecioParchado() {
+    const precio = parseFloat(document.getElementById('input-precio-parchado').value);
+    
+    if (!precio || precio <= 0) {
+        alert('Debe ingresar un precio válido para el parchado');
+        return;
+    }
+
+    // Agregar servicio de parchado al carrito
+    const servicioParchado = todosLosProductos.find(p => p.codigo === 'SERV-PARCHADO');
+    
+    if (servicioParchado) {
+        carrito.push({
+            productoId: servicioParchado.id,
+            codigo: servicioParchado.codigo,
+            nombre: servicioParchado.nombre,
+            tipo: 'SERVICIO',
+            precioUnitario: precio,
+            cantidad: 1,
+            esServicio: true,
+            precioManual: precio
+        });
+        
+        actualizarCarrito();
+    }
+
+    modalPrecioParchado.classList.add('hidden');
+    precioParchadoPendiente = false;
+    
+    // Procesar venta
+    procesarVenta();
+}
+
+// Procesar venta
+async function procesarVenta() {
+    const cliente = document.getElementById('input-cliente').value.trim() || 'Cliente General';
     const observaciones = document.getElementById('input-observaciones').value.trim();
 
-    // Preparar datos para la venta
     const ventaData = {
-        cliente: cliente || 'Cliente General',
-        documento: documento || '',
-        observaciones: observaciones || '',
+        cliente: cliente,
+        observaciones: observaciones,
         detalles: carrito.map(item => ({
-            productoId: item.esServicio ? 
-                // Para servicios, crear un producto temporal o usar uno existente
-                // Aquí asumimos que tienes productos de servicios en la BD
-                todosLosProductos[0].id : // NOTA: Deberías crear productos para servicios
-                item.productoId,
+            productoId: item.productoId,
             cantidad: item.cantidad,
             precioUnitario: item.precioUnitario,
             esServicio: item.esServicio,
-            descripcion: item.esServicio ? item.nombre : null
+            precioManual: item.precioManual || null
         }))
     };
 
     try {
-        btnVender.disabled = true;
-        btnVender.textContent = 'Procesando...';
+        btnProcesarVenta.disabled = true;
+        btnProcesarVenta.textContent = 'Procesando...';
 
-        const venta = await API_VENTAS.registrarVenta(ventaData);
+        const venta = await API.registrarVenta(ventaData);
         
         mostrarBoleta(venta);
         
     } catch (error) {
         alert('Error al procesar la venta: ' + error.message);
-        btnVender.disabled = false;
-        btnVender.textContent = '💰 Procesar Venta';
+        btnProcesarVenta.disabled = false;
+        btnProcesarVenta.textContent = '💰 Procesar Venta';
     }
 }
 
@@ -385,7 +346,7 @@ function mostrarBoleta(venta) {
     const boletaContent = document.getElementById('boleta-content');
     
     const fecha = new Date(venta.fechaVenta);
-    const fechaFormateada = fecha.toLocaleDateString('es-PE', {
+    const fechaFormateada = fecha.toLocaleString('es-PE', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -398,15 +359,13 @@ function mostrarBoleta(venta) {
             <p><strong>Número de Boleta:</strong> ${venta.numeroBoleta}</p>
             <p><strong>Fecha:</strong> ${fechaFormateada}</p>
             <p><strong>Cliente:</strong> ${venta.cliente}</p>
-            ${venta.documento ? `<p><strong>Documento:</strong> ${venta.documento}</p>` : ''}
         </div>
 
         <div class="boleta-detalles">
-            <h3>Detalle de la Venta</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Descripción</th>
+                        <th>Producto</th>
                         <th>Cant.</th>
                         <th>P. Unit.</th>
                         <th>Subtotal</th>
@@ -415,31 +374,20 @@ function mostrarBoleta(venta) {
                 <tbody>
                     ${venta.detalles.map(detalle => `
                         <tr>
-                            <td>
-                                ${detalle.productoNombre}
-                                ${detalle.esServicio ? '<span class="badge badge-warning" style="margin-left: 5px;">Servicio</span>' : ''}
-                            </td>
+                            <td>${detalle.productoNombre}</td>
                             <td>${detalle.cantidad}</td>
-                            <td>S/ ${detalle.precioUnitario.toFixed(2)}</td>
-                            <td>S/ ${detalle.subtotal.toFixed(2)}</td>
+                            <td>S/ ${formatearPrecio(detalle.precioUnitario)}</td>
+                            <td>S/ ${formatearPrecio(detalle.subtotal)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
         </div>
 
-        <div class="boleta-totales">
+        <div class="boleta-total">
             <div class="total-row">
-                <span>Subtotal:</span>
-                <span>S/ ${venta.subtotal.toFixed(2)}</span>
-            </div>
-            <div class="total-row">
-                <span>IGV (18%):</span>
-                <span>S/ ${venta.igv.toFixed(2)}</span>
-            </div>
-            <div class="total-row total-final">
                 <span>TOTAL:</span>
-                <span>S/ ${venta.total.toFixed(2)}</span>
+                <span>S/ ${formatearPrecio(venta.total)}</span>
             </div>
         </div>
 
@@ -458,11 +406,10 @@ function nuevaVenta() {
     modalBoleta.classList.add('hidden');
     carrito = [];
     document.getElementById('input-cliente').value = '';
-    document.getElementById('input-documento').value = '';
     document.getElementById('input-observaciones').value = '';
     actualizarCarrito();
-    btnVender.disabled = false;
-    btnVender.textContent = '💰 Procesar Venta';
+    btnProcesarVenta.disabled = false;
+    btnProcesarVenta.textContent = '💰 Procesar Venta';
     
     // Recargar productos para actualizar stock
     cargarProductos();
@@ -479,20 +426,17 @@ function imprimirBoleta() {
             <title>Boleta de Venta</title>
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; }
-                h3 { color: #667eea; }
+                h1 { text-align: center; color: #667eea; }
                 table { width: 100%; border-collapse: collapse; margin: 20px 0; }
                 th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
                 th { background: #667eea; color: white; }
-                .total-row { display: flex; justify-content: space-between; padding: 5px 0; }
-                .total-final { border-top: 2px solid #667eea; margin-top: 10px; padding-top: 10px; font-size: 18px; font-weight: bold; }
                 .boleta-info { background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 10px 0; }
-                @media print {
-                    body { padding: 0; }
-                }
+                .boleta-total { background: #f8f9ff; padding: 15px; border-radius: 8px; margin-top: 15px; }
+                .total-row { display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; }
             </style>
         </head>
         <body>
-            <h1 style="text-align: center; color: #667eea;">🛞 Llantería - Boleta de Venta</h1>
+            <h1>🛞 Llantería - Boleta de Venta</h1>
             ${contenido}
             <script>
                 window.onload = function() {
@@ -513,39 +457,34 @@ async function mostrarVentasDelDia() {
     modalVentasDia.classList.remove('hidden');
 
     try {
-        const ventas = await API_VENTAS.getVentasDelDia();
+        const ventas = await API.obtenerVentasDelDia();
         
         if (ventas.length === 0) {
             ventasLista.innerHTML = '<div class="loading">No hay ventas registradas hoy</div>';
-            document.getElementById('stat-cantidad-ventas').textContent = '0';
-            document.getElementById('stat-monto-total').textContent = 'S/ 0.00';
+            document.getElementById('stat-cantidad').textContent = '0';
+            document.getElementById('stat-monto').textContent = 'S/ 0.00';
             return;
         }
 
         const montoTotal = ventas.reduce((sum, v) => sum + v.total, 0);
         
-        document.getElementById('stat-cantidad-ventas').textContent = ventas.length;
-        document.getElementById('stat-monto-total').textContent = `S/ ${montoTotal.toFixed(2)}`;
+        document.getElementById('stat-cantidad').textContent = ventas.length;
+        document.getElementById('stat-monto').textContent = `S/ ${formatearPrecio(montoTotal)}`;
 
         ventasLista.innerHTML = ventas.map(venta => {
             const fecha = new Date(venta.fechaVenta);
-            const fechaFormateada = fecha.toLocaleString('es-PE', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const hora = fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
 
             return `
                 <div class="venta-item">
                     <div class="venta-header">
                         <div>
                             <div class="venta-numero">${venta.numeroBoleta}</div>
-                            <div class="venta-fecha">${fechaFormateada} - ${venta.cliente}</div>
+                            <div class="venta-info">${hora} - ${venta.cliente}</div>
                         </div>
-                        <div class="venta-total">S/ ${venta.total.toFixed(2)}</div>
+                        <div class="venta-total">S/ ${formatearPrecio(venta.total)}</div>
                     </div>
-                    <div class="venta-detalles">
-                        ${venta.detalles.length} producto(s)/servicio(s)
-                    </div>
+                    <div class="venta-info">${venta.detalles.length} producto(s)</div>
                 </div>
             `;
         }).join('');
@@ -554,4 +493,20 @@ async function mostrarVentasDelDia() {
         ventasLista.innerHTML = '<div class="loading">Error al cargar ventas</div>';
         console.error('Error:', error);
     }
+}
+
+// Obtener badge según tipo
+function obtenerBadgeTipo(tipo) {
+    const badges = {
+        'PARCHE': '<span class="badge badge-parche">PARCHE</span>',
+        'MATERIAL': '<span class="badge badge-material">MATERIAL</span>',
+        'ACCESORIO': '<span class="badge badge-accesorio">ACCESORIO</span>',
+        'SERVICIO': '<span class="badge badge-servicio">SERVICIO</span>'
+    };
+    return badges[tipo] || `<span class="badge">${tipo}</span>`;
+}
+
+// Formatear precio
+function formatearPrecio(precio) {
+    return parseFloat(precio || 0).toFixed(2);
 }

@@ -1,33 +1,24 @@
-const API_BASE_URL = 'http://localhost:8087/api/productos';
+const API_BASE_URL = 'http://localhost:8087/api';
 
 const API = {
-    // Obtener todos los productos
-    async getAllProducts() {
+    // ========== PRODUCTOS ==========
+    
+    async obtenerProductos() {
         try {
-            const response = await fetch(API_BASE_URL);
+            const response = await fetch(`${API_BASE_URL}/productos`);
             if (!response.ok) throw new Error('Error al obtener productos');
             return await response.json();
         } catch (error) {
             console.error('Error:', error);
-            alert('Error al conectar con el servidor. Verifica que el backend esté corriendo.');
+            alert('Error al conectar con el servidor. Verifica que el backend esté corriendo en el puerto 8087.');
             return [];
         }
     },
 
-    // Crear producto
-    async createProduct(productData) {
+    async obtenerProductoPorCodigo(codigo) {
         try {
-            const response = await fetch(API_BASE_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(productData)
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Error al crear producto');
-            }
+            const response = await fetch(`${API_BASE_URL}/productos/codigo/${codigo}`);
+            if (!response.ok) throw new Error('Error al obtener producto');
             return await response.json();
         } catch (error) {
             console.error('Error:', error);
@@ -35,42 +26,20 @@ const API = {
         }
     },
 
-    // Actualizar producto
-    async updateProduct(id, productData) {
+    async obtenerTiposProductos() {
         try {
-            const response = await fetch(`${API_BASE_URL}/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(productData)
-            });
-            if (!response.ok) throw new Error('Error al actualizar producto');
+            const response = await fetch(`${API_BASE_URL}/productos/tipos`);
+            if (!response.ok) throw new Error('Error al obtener tipos');
             return await response.json();
         } catch (error) {
             console.error('Error:', error);
-            throw error;
+            return [];
         }
     },
 
-    // Eliminar producto
-    async deleteProduct(id) {
+    async buscarProductos(termino) {
         try {
-            const response = await fetch(`${API_BASE_URL}/${id}`, {
-                method: 'DELETE'
-            });
-            if (!response.ok) throw new Error('Error al eliminar producto');
-            return await response.json();
-        } catch (error) {
-            console.error('Error:', error);
-            throw error;
-        }
-    },
-
-    // Buscar productos
-    async searchProducts(term) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/buscar?q=${encodeURIComponent(term)}`);
+            const response = await fetch(`${API_BASE_URL}/productos/buscar?q=${encodeURIComponent(termino)}`);
             if (!response.ok) throw new Error('Error al buscar productos');
             return await response.json();
         } catch (error) {
@@ -79,11 +48,12 @@ const API = {
         }
     },
 
-    // Obtener productos con stock bajo
-    async getProductsLowStock() {
+    // ========== LOTES ==========
+    
+    async obtenerLotes() {
         try {
-            const response = await fetch(`${API_BASE_URL}/stock-bajo`);
-            if (!response.ok) throw new Error('Error al obtener productos con stock bajo');
+            const response = await fetch(`${API_BASE_URL}/lotes`);
+            if (!response.ok) throw new Error('Error al obtener lotes');
             return await response.json();
         } catch (error) {
             console.error('Error:', error);
@@ -91,32 +61,93 @@ const API = {
         }
     },
 
-    // Obtener estadísticas
-    async getStatistics() {
+    async obtenerLotesActivos() {
         try {
-            const response = await fetch(`${API_BASE_URL}/estadisticas`);
-            if (!response.ok) throw new Error('Error al obtener estadísticas');
-            return await response.json();
-        } catch (error) {
-            console.error('Error:', error);
-            return {
-                totalProductos: 0,
-                productosConStockBajo: 0,
-                totalCategorias: 0,
-                valorTotalInventario: 0
-            };
-        }
-    },
-
-    // Obtener categorías
-    async getCategories() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/categorias/todas`);
-            if (!response.ok) throw new Error('Error al obtener categorías');
+            const response = await fetch(`${API_BASE_URL}/lotes/activos`);
+            if (!response.ok) throw new Error('Error al obtener lotes activos');
             return await response.json();
         } catch (error) {
             console.error('Error:', error);
             return [];
+        }
+    },
+
+    async obtenerLotesPorTipo(tipo) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/lotes/tipo/${tipo}`);
+            if (!response.ok) throw new Error('Error al obtener lotes por tipo');
+            return await response.json();
+        } catch (error) {
+            console.error('Error:', error);
+            return [];
+        }
+    },
+
+    async crearLote(loteData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/lotes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(loteData)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Error al crear lote');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    },
+
+    // ========== VENTAS ==========
+    
+    async registrarVenta(ventaData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/ventas`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(ventaData)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Error al registrar venta');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    },
+
+    async obtenerVentasDelDia() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/ventas/hoy`);
+            if (!response.ok) throw new Error('Error al obtener ventas del día');
+            return await response.json();
+        } catch (error) {
+            console.error('Error:', error);
+            return [];
+        }
+    },
+
+    async obtenerVentaPorId(id) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/ventas/${id}`);
+            if (!response.ok) throw new Error('Error al obtener venta');
+            return await response.json();
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
         }
     }
 };
