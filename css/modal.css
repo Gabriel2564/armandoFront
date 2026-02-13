@@ -1,0 +1,91 @@
+.modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.45); backdrop-filter:blur(2px);
+    z-index:1000; align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.active { display:flex; animation:fadeIn 0.2s ease; }
+
+.modal {
+    background:var(--white); border-radius:6px;
+    width:100%; max-width:600px; max-height:90vh;
+    overflow-y:auto; box-shadow:var(--shadow-lg);
+    animation: modalIn 0.25s ease;
+}
+.modal-lg { max-width:840px; }
+@keyframes modalIn { from{transform:translateY(-16px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+/* Header estilo mockup: logo + nombre empresa */
+.modal-header {
+    display:flex; align-items:center; padding:14px 20px;
+    border-bottom:1px solid var(--border); gap:14px;
+    background:#fafafa; border-radius:6px 6px 0 0; position:relative;
+}
+.modal-header img { width:60px; height:auto; }
+.modal-header h3 { font-size:15px; font-weight:600; flex:1; }
+.modal-close {
+    position:absolute; right:14px; top:10px;
+    background:none; border:none; font-size:22px;
+    color:var(--text-light); cursor:pointer; padding:2px 6px; border-radius:3px;
+}
+.modal-close:hover { background:#eee; color:var(--danger); }
+
+/* Barra de titulo (ej: COMPRA INSUMOS SERVICIOS) */
+.modal-title-bar {
+    background:var(--primary-light); border-bottom:2px solid var(--primary);
+    padding:8px 20px; font-size:13px; font-weight:600;
+    color:var(--primary); text-align:center; text-transform:uppercase; letter-spacing:1px;
+}
+
+.modal-body { padding:20px; }
+
+.modal-footer {
+    display:flex; justify-content:flex-end; gap:10px;
+    padding:14px 20px; border-top:1px solid var(--border);
+    background:#fafafa; border-radius:0 0 6px 6px;
+}
+
+/* Detalle (tabla dentro del modal) */
+.detalle-section { margin-top:16px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.detalle-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 14px; background:#f5f5f5; border-bottom:1px solid var(--border);
+    font-size:12px; font-weight:600;
+}
+.detalle-actions { display:flex; gap:6px; }
+
+.detalle-table { box-shadow:none; border-radius:0; }
+.detalle-table thead { background:#f9f9f9; }
+.detalle-table thead th { padding:7px 8px; font-size:10px; border-bottom:1px solid var(--border); }
+.detalle-table tbody td { padding:5px 8px; font-size:11px; }
+.detalle-table input, .detalle-table select {
+    width:100%; padding:5px 6px; border:1px solid var(--border);
+    border-radius:3px; font-family:'Poppins',sans-serif; font-size:11px;
+}
+.detalle-table input:focus, .detalle-table select:focus { outline:none; border-color:var(--primary); }
+.detalle-table input[type="number"] { width:72px; text-align:right; }
+.detalle-table .col-item { width:40px; text-align:center; }
+.detalle-table .col-remove { width:36px; text-align:center; }
+.detalle-table .btn-remove {
+    background:none; border:none; color:var(--danger);
+    cursor:pointer; font-size:13px; padding:3px 5px; border-radius:3px;
+}
+.detalle-table .btn-remove:hover { background:rgba(231,76,60,0.1); }
+
+.detalle-total {
+    display:flex; justify-content:flex-end; align-items:center;
+    gap:16px; padding:10px 14px; background:#f9f9f9;
+    border-top:2px solid var(--border); font-weight:600; font-size:13px;
+}
+.detalle-total span:last-child { font-size:15px; color:var(--primary); min-width:70px; text-align:right; }
+
+/* Ver detalle (solo lectura) */
+.ver-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.ver-info-item { display:flex; flex-direction:column; gap:2px; }
+.ver-info-item.full { grid-column:span 2; }
+.ver-info-label { font-size:10px; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.5px; }
+.ver-info-value { font-size:13px; padding:5px 8px; background:#f9f9f9; border-radius:3px; border:1px solid #eee; }
+.ver-detalle-table { margin-top:12px; }
+.ver-total-row { display:flex; justify-content:flex-end; gap:16px; padding:10px 0; font-weight:600; font-size:14px; }
+.ver-total-row span:last-child { color:var(--primary); }
+.forma-pago-row { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:12px; }
+.forma-pago-row strong { color:var(--text-light); }

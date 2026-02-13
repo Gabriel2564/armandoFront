@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGV Llantas - Sistema de Gestion</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/tables.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV Llantas">
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="llantas">
+                <i class="fas fa-circle-dot"></i><span>Llantas</span>
+            </a>
+            <a href="#" class="nav-item" data-section="servicios">
+                <i class="fas fa-cogs"></i><span>Servicios</span>
+            </a>
+            <a href="#" class="nav-item" data-section="salidas">
+                <i class="fas fa-right-from-bracket"></i><span>Salidas</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <!-- ===== SECCION LLANTAS ===== -->
+        <section class="section" id="seccionLlantas">
+            <div class="tabs">
+                <button class="tab active" data-tab="entradas-llantas">ENTRADAS</button>
+                <button class="tab" data-tab="stock-llantas">STOCK</button>
+            </div>
+
+            <div class="tab-content active" id="entradas-llantas">
+                <div class="content-header">
+                    <h2>Entradas de Llantas</h2>
+                    <button class="btn btn-primary" onclick="abrirModalEntradaLlanta()"><i class="fas fa-plus"></i> Nueva Entrada</button>
+                </div>
+                <div class="table-container">
+                    <table id="tablaEntradasLlantas">
+                        <thead><tr><th>ID</th><th>Fecha</th><th>Proveedor</th><th>Factura</th><th>Forma Pago</th><th>Total</th><th>Acciones</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="watermark" id="watermarkEntradasLlantas">
+                    <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV Llantas">
+                </div>
+            </div>
+
+            <div class="tab-content" id="stock-llantas">
+                <div class="content-header">
+                    <h2>Stock de Llantas</h2>
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="buscarLlanta" placeholder="Buscar por codigo, producto o medida..." oninput="buscarLlantas()"></div>
+                </div>
+                <div class="table-container">
+                    <table id="tablaStockLlantas">
+                        <thead><tr><th>Codigo</th><th>Producto</th><th>Medida</th><th>Tipo</th><th>Proveedor</th><th>Entradas</th><th>Salidas</th><th>Stock</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECCION SERVICIOS ===== -->
+        <section class="section hidden" id="seccionServicios">
+            <div class="tabs">
+                <button class="tab active" data-tab="entradas-servicios">ENTRADAS</button>
+                <button class="tab" data-tab="stock-servicios">STOCK</button>
+            </div>
+
+            <div class="tab-content active" id="entradas-servicios">
+                <div class="content-header">
+                    <h2>Compra Insumos Servicios</h2>
+                    <button class="btn btn-primary" onclick="abrirModalEntradaServicio()"><i class="fas fa-plus"></i> Nueva Entrada</button>
+                </div>
+                <div class="table-container">
+                    <table id="tablaEntradasServicios">
+                        <thead><tr><th>ID</th><th>Fecha</th><th>Proveedor</th><th>Factura</th><th>Forma Pago</th><th>Total</th><th>Acciones</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="watermark" id="watermarkEntradasServicios">
+                    <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV Llantas">
+                </div>
+            </div>
+
+            <div class="tab-content" id="stock-servicios">
+                <div class="content-header">
+                    <h2>Stock de Insumos</h2>
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="buscarServicio" placeholder="Buscar por codigo o producto..." oninput="buscarServicios()"></div>
+                </div>
+                <div class="table-container">
+                    <table id="tablaStockServicios">
+                        <thead><tr><th>Codigo</th><th>Producto</th><th>Tipo</th><th>Precio</th><th>Entradas</th><th>Salidas</th><th>Stock</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECCION SALIDAS ===== -->
+        <section class="section hidden" id="seccionSalidas">
+            <div class="content-header">
+                <h2>Ordenes de Servicio</h2>
+                <div class="header-actions">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="buscarOrden" placeholder="Buscar por cliente o placa..."></div>
+                    <button class="btn btn-primary" onclick="abrirModalOrdenServicio()"><i class="fas fa-plus"></i> Nueva Orden</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="tablaOrdenes">
+                    <thead><tr><th>N Orden</th><th>Fecha</th><th>Cliente</th><th>Placa</th><th>Forma Pago</th><th>Total</th><th>Acciones</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="watermark" id="watermarkOrdenes">
+                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV Llantas">
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== MODAL: ENTRADA LLANTA ===== -->
+    <div class="modal-overlay" id="modalEntradaLlanta">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV">
+                <h3>AGV NEUTECNICA E.I.R.L.</h3>
+                <button class="modal-close" onclick="cerrarModal('modalEntradaLlanta')">&times;</button>
+            </div>
+            <div class="modal-title-bar">COMPRA LLANTAS</div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>Fecha</label><input type="date" id="entLlantaFecha"></div>
+                    <div class="form-group"><label>RUC</label><input type="text" id="entLlantaRuc" placeholder="RUC del proveedor"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full"><label>Proveedor</label><input type="text" id="entLlantaProveedor" placeholder="Nombre del proveedor"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Factura</label><input type="text" id="entLlantaFactura" placeholder="N de factura"></div>
+                    <div class="form-group"><label>Forma de Pago</label>
+                        <select id="entLlantaFormaPago"><option value="">Seleccionar...</option><option value="EFECTIVO">Efectivo</option><option value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</option><option value="YAPE">Yape</option><option value="PLIN">Plin</option><option value="TARJETA">Tarjeta</option></select>
+                    </div>
+                </div>
+                <div class="detalle-section">
+                    <div class="detalle-header"><span>Detalle de Productos</span><button class="btn btn-sm btn-add" onclick="agregarFilaDetalleLlanta()"><i class="fas fa-plus"></i> Agregar Item</button></div>
+                    <table class="detalle-table"><thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Medida</th><th>Tipo</th><th>Cantidad</th><th>P. Unit.</th><th>P. Total</th><th></th></tr></thead><tbody id="detalleEntradaLlanta"></tbody></table>
+                    <div class="detalle-total"><span>TOTAL</span><span id="totalEntradaLlanta">0.00</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal('modalEntradaLlanta')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarEntradaLlanta()"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: ENTRADA SERVICIO ===== -->
+    <div class="modal-overlay" id="modalEntradaServicio">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV">
+                <h3>AGV NEUTECNICA E.I.R.L.</h3>
+                <button class="modal-close" onclick="cerrarModal('modalEntradaServicio')">&times;</button>
+            </div>
+            <div class="modal-title-bar">COMPRA INSUMOS SERVICIOS</div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>Fecha</label><input type="date" id="entServicioFecha"></div>
+                    <div class="form-group"><label>RUC</label><input type="text" id="entServicioRuc" placeholder="RUC del proveedor"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full"><label>Proveedor</label><input type="text" id="entServicioProveedor" placeholder="Nombre del proveedor"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Factura</label><input type="text" id="entServicioFactura" placeholder="N de factura"></div>
+                    <div class="form-group"><label>Forma de Pago</label>
+                        <select id="entServicioFormaPago"><option value="">Seleccionar...</option><option value="EFECTIVO">Efectivo</option><option value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</option><option value="YAPE">Yape</option><option value="PLIN">Plin</option><option value="TARJETA">Tarjeta</option></select>
+                    </div>
+                </div>
+                <div class="detalle-section">
+                    <div class="detalle-header"><span>Detalle de Productos</span><button class="btn btn-sm btn-add" onclick="agregarFilaDetalleServicio()"><i class="fas fa-plus"></i> Agregar Item</button></div>
+                    <table class="detalle-table"><thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Tipo_Grupo</th><th>Cantidad</th><th>P. Unit.</th><th>P. Total</th><th></th></tr></thead><tbody id="detalleEntradaServicio"></tbody></table>
+                    <div class="detalle-total"><span>TOTAL</span><span id="totalEntradaServicio">0.00</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal('modalEntradaServicio')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarEntradaServicio()"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: ORDEN DE SERVICIO ===== -->
+    <div class="modal-overlay" id="modalOrdenServicio">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV">
+                <h3>AGV NEUTECNICA E.I.R.L.</h3>
+                <button class="modal-close" onclick="cerrarModal('modalOrdenServicio')">&times;</button>
+            </div>
+            <div class="modal-title-bar">Orden de Servicio</div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>N Orden</label><input type="text" id="ordenNumero" placeholder="N de orden"></div>
+                    <div class="form-group"><label>Fecha</label><input type="date" id="ordenFecha"></div>
+                    <div class="form-group"><label>RUC</label><input type="text" id="ordenRuc" placeholder="RUC"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full"><label>Cliente</label><input type="text" id="ordenCliente" placeholder="Nombre del cliente"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Placa</label><input type="text" id="ordenPlaca" placeholder="Placa del vehiculo"></div>
+                    <div class="form-group"><label>Forma de Pago</label>
+                        <select id="ordenFormaPago"><option value="">Seleccionar...</option><option value="EFECTIVO">Efectivo</option><option value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</option><option value="YAPE">Yape</option><option value="PLIN">Plin</option><option value="TARJETA">Tarjeta</option></select>
+                    </div>
+                </div>
+                <div class="detalle-section">
+                    <div class="detalle-header">
+                        <span>Detalle de la Orden</span>
+                        <div class="detalle-actions">
+                            <button class="btn btn-sm btn-add" onclick="agregarFilaOrdenLlanta()"><i class="fas fa-plus"></i> Llanta</button>
+                            <button class="btn btn-sm btn-add-alt" onclick="agregarFilaOrdenServicio()"><i class="fas fa-plus"></i> Servicio</button>
+                        </div>
+                    </div>
+                    <table class="detalle-table"><thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Cantidad</th><th>P. Unit.</th><th>P. Total</th><th></th></tr></thead><tbody id="detalleOrden"></tbody></table>
+                    <div class="detalle-total"><span>TOTAL</span><span id="totalOrden">0.00</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal('modalOrdenServicio')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarOrdenServicio()"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: VER DETALLE ===== -->
+    <div class="modal-overlay" id="modalVerDetalle">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV">
+                <h3>AGV NEUTECNICA E.I.R.L.</h3>
+                <button class="modal-close" onclick="cerrarModal('modalVerDetalle')">&times;</button>
+            </div>
+            <div class="modal-title-bar" id="verDetalleTitulo">Detalle</div>
+            <div class="modal-body" id="verDetalleContenido"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModal('modalVerDetalle')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/llantas.js"></script>
+    <script src="js/servicios.js"></script>
+    <script src="js/ordenes.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
