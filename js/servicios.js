@@ -214,3 +214,31 @@ async function eliminarEntradaServicio(id) {
         cargarStockServicios();
     } catch (err) { showToast(err.message, 'error'); }
 }
+
+/* Autocompletar servicio al presionar Enter */
+function autocompletarServicio(input) {
+    var codigo = input.value.trim();
+    if (!codigo) return;
+    var codigoUpper = codigo.toUpperCase();
+
+    var dropdown = input.nextElementSibling;
+    if (dropdown) dropdown.classList.remove('active');
+
+    var found = serviciosCache.find(function (s) { return s.codigo.toUpperCase() === codigoUpper; });
+    if (!found) { found = serviciosCache.find(function (s) { return s.codigo.toUpperCase().startsWith(codigoUpper); }); }
+    if (!found) { found = serviciosCache.find(function (s) { return s.codigo.toUpperCase().includes(codigoUpper); }); }
+
+    if (found) {
+        var tr = input.closest('tr');
+        input.value = found.codigo;
+        input.dataset.id = found.id;
+        tr.querySelector('.desc-field').value = found.producto;
+        tr.querySelector('.tipo-field').value = found.tipo || '';
+        if (found.precio && found.precio > 0) {
+            tr.querySelector('.pu-field').value = found.precio;
+            recalcularTotalES();
+        }
+    } else {
+        showToast('No se encontro servicio con codigo: ' + codigo, 'warning');
+    }
+}

@@ -37,6 +37,10 @@ const api = {
         registrar: (data) => fetchJSON(`${API_BASE}/ordenes`, 'POST', data),
         eliminar: (id) => fetchJSON(`${API_BASE}/ordenes/${id}`, 'DELETE'),
     },
+    costos: {
+        kardex: (llantaId) => fetchJSON(`${API_BASE}/costos/kardex/${llantaId}`),
+        resumen: (llantaId) => fetchJSON(`${API_BASE}/costos/resumen/${llantaId}`),
+    },
 };
 
 async function fetchJSON(url, method = 'GET', body = null) {

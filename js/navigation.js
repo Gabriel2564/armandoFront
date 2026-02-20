@@ -21,13 +21,14 @@ function navigateTo(section) {
     document.querySelectorAll('.section').forEach(function (sec) {
         sec.classList.add('hidden');
     });
-    var map = { 'llantas': 'seccionLlantas', 'servicios': 'seccionServicios', 'salidas': 'seccionSalidas' };
+    var map = { 'llantas': 'seccionLlantas', 'servicios': 'seccionServicios', 'salidas': 'seccionSalidas', 'kardex': 'seccionKardex' };
     var target = document.getElementById(map[section]);
     if (target) target.classList.remove('hidden');
 
     if (section === 'llantas') { cargarEntradasLlantas(); cargarStockLlantas(); }
     else if (section === 'servicios') { cargarEntradasServicios(); cargarStockServicios(); }
     else if (section === 'salidas') { cargarOrdenes(); }
+    else if (section === 'kardex') { cargarLlantasCache(); }
 }
 
 function switchTab(tabGroup, targetTab) {
@@ -83,3 +84,44 @@ function renumerarFilas(tbodyId) {
         if (cell) cell.textContent = i + 1;
     });
 }
+
+/* ========== LISTENER GLOBAL: Enter en campos de busqueda ========== */
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var input = e.target;
+    if (!input.closest || !input.closest('.select-search-wrapper')) return;
+
+    e.preventDefault();
+
+    // Cerrar dropdown
+    var dropdown = input.nextElementSibling;
+    if (dropdown) dropdown.classList.remove('active');
+
+    // Si es el buscador del Kardex (no esta dentro de un tr)
+    var tr = input.closest('tr');
+    if (!tr) {
+        if (input.id === 'kardexBuscarLlanta') {
+            cargarKardex();
+        }
+        return;
+    }
+
+    var tbody = tr.closest('tbody');
+    var codigo = input.value.trim();
+    if (!codigo) return;
+
+    var tbodyId = tbody.id;
+
+    if (tbodyId === 'detalleEntradaLlanta') {
+        autocompletarLlanta(input);
+    } else if (tbodyId === 'detalleEntradaServicio') {
+        autocompletarServicio(input);
+    } else if (tbodyId === 'detalleOrden') {
+        var tipo = input.dataset.tipo || tr.dataset.tipo;
+        if (tipo === 'llanta') {
+            autocompletarLlantaOrden(input);
+        } else {
+            autocompletarServicioOrden(input);
+        }
+    }
+});

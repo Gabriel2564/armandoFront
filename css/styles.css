@@ -24,7 +24,8 @@ body {
     background: var(--bg);
     color: var(--text);
     display: flex;
-    min-height: 100vh;
+    height: 100vh;      /* Altura fija al 100% de la ventana */
+    overflow: hidden;   /* IMPORTANTE: Elimina el scrollbar global que parpadea */
 }
 
 /* ====== SIDEBAR ====== */
@@ -80,14 +81,31 @@ body {
     margin-left: var(--sidebar-width);
     flex: 1;
     padding: 20px 28px;
-    min-height: 100vh;
+    height: 100vh;       /* Ocupa toda la altura disponible */
+    overflow-y: auto;    /* El scroll ocurre AQUI dentro si es necesario */
+    overflow-x: hidden;  /* Evita scroll horizontal accidental */
+    position: relative;
 }
 
-.section { animation: fadeIn 0.25s ease; }
+.section { 
+    position: relative;
+    min-height: 85vh;
+    animation: fadeIn 0.25s ease; 
+}
 .section.hidden { display: none; }
-@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 
-/* ====== TABS (fiel al mockup: ENTRADAS naranja, STOCK gris) ====== */
+@keyframes fadeIn { 
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px);
+    } 
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    } 
+}
+
+/* ====== TABS ====== */
 .tabs { display: flex; gap: 0; margin-bottom: 20px; }
 
 .tab {
@@ -162,19 +180,43 @@ body {
 .btn-icon.delete { color:var(--danger); }
 .btn-icon.delete:hover { background:rgba(231,76,60,0.1); }
 
-/* ====== WATERMARK (logo central como en el mockup) ====== */
+/* ====== WATERMARK ====== */
 .watermark {
+    position: fixed; 
+    top: 0;
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 420px;
-}
-.watermark img {
-    width: 340px;
-    height: auto;
-    opacity: 0.10;
-    user-select: none;
+    z-index: 0;
     pointer-events: none;
+    overflow: hidden;
+}
+
+.watermark img {
+    width: 70%;
+    max-width: 900px;
+    height: auto;
+    opacity: 0.15;
+}
+
+.tab-content {
+    position: relative;
+    min-height: 80vh;
+}
+
+.content-header, 
+.table-container,
+.search-box {
+    position: relative;
+    z-index: 2;
+    background: transparent;
+}
+
+table {
+    background: rgba(255, 255, 255, 0.85); 
 }
 
 /* ====== STOCK BADGE ====== */
@@ -197,3 +239,34 @@ body {
 .toast.warning { background:var(--warning); }
 @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
 @keyframes slideOut { from{transform:translateX(0);opacity:1} to{transform:translateX(100%);opacity:0} }
+
+/* ====== KARDEX ====== */
+.kardex-resumen {
+    display: flex; gap: 16px; margin-bottom: 20px;
+    background: var(--white); padding: 16px 20px;
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+    position: relative; z-index: 2;
+}
+.kardex-resumen-item { display:flex; flex-direction:column; gap:2px; flex:1; }
+.kardex-resumen-item .label { font-size:10px; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.5px; }
+.kardex-resumen-item .value { font-size:14px; font-weight:500; }
+.kardex-resumen-item .value.highlight { font-size:16px; font-weight:700; color:var(--primary); }
+
+/* Kardex table special headers */
+.th-group { text-align:center; font-size:11px; padding:8px 4px; }
+.th-group.entrada { background:rgba(46,204,113,0.12); color:#27ae60; }
+.th-group.salida { background:rgba(231,76,60,0.12); color:#c0392b; }
+.th-group.saldo { background:rgba(242,122,26,0.12); color:var(--primary); }
+.th-sub { font-size:10px; padding:5px 8px; }
+
+/* Kardex row colors */
+.row-entrada td { background:rgba(46,204,113,0.03); }
+.row-salida td { background:rgba(231,76,60,0.03); }
+.row-entrada:hover td { background:rgba(46,204,113,0.08); }
+.row-salida:hover td { background:rgba(231,76,60,0.08); }
+
+/* Badge tipo */
+.badge-tipo { display:inline-block; padding:2px 8px; border-radius:3px; font-size:10px; font-weight:600; letter-spacing:0.5px; }
+.badge-entrada { background:rgba(46,204,113,0.15); color:#27ae60; }
+.badge-salida { background:rgba(231,76,60,0.15); color:#c0392b; }

@@ -28,6 +28,9 @@
             <a href="#" class="nav-item" data-section="salidas">
                 <i class="fas fa-right-from-bracket"></i><span>Salidas</span>
             </a>
+            <a href="#" class="nav-item" data-section="kardex">
+                <i class="fas fa-chart-line"></i><span>Kardex</span>
+            </a>
         </nav>
     </aside>
 
@@ -53,7 +56,7 @@
                     </table>
                 </div>
                 <div class="watermark" id="watermarkEntradasLlantas">
-                    <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV Llantas">
+                    <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV Llantas">
                 </div>
             </div>
 
@@ -64,7 +67,7 @@
                 </div>
                 <div class="table-container">
                     <table id="tablaStockLlantas">
-                        <thead><tr><th>Codigo</th><th>Producto</th><th>Medida</th><th>Tipo</th><th>Proveedor</th><th>Entradas</th><th>Salidas</th><th>Stock</th></tr></thead>
+                        <thead><tr><th>Codigo</th><th>Producto</th><th>Medida</th><th>Tipo</th><th>Proveedor</th><th>Entradas</th><th>Salidas</th><th>Stock</th><th>Costo Prom.</th><th>Valor Inv.</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -90,7 +93,7 @@
                     </table>
                 </div>
                 <div class="watermark" id="watermarkEntradasServicios">
-                    <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV Llantas">
+                    <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV Llantas">
                 </div>
             </div>
 
@@ -124,7 +127,67 @@
                 </table>
             </div>
             <div class="watermark" id="watermarkOrdenes">
-                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV Llantas">
+                <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV Llantas">
+            </div>
+        </section>
+
+        <!-- ===== SECCION KARDEX ===== -->
+        <section class="section hidden" id="seccionKardex">
+            <div class="content-header">
+                <h2>Kardex - Costo Promedio</h2>
+                <div class="header-actions">
+                    <div class="form-group" style="min-width:320px">
+                        <div class="select-search-wrapper">
+                            <input type="text" id="kardexBuscarLlanta" placeholder="Buscar llanta por codigo o nombre..." oninput="buscarLlantaKardex(this)" onfocus="buscarLlantaKardex(this)" data-id="">
+                            <div class="select-search-dropdown" id="kardexDropdown"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="cargarKardex()"><i class="fas fa-search"></i> Consultar</button>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="kardex-resumen" id="kardexResumen" style="display:none">
+                <div class="kardex-resumen-item">
+                    <span class="label">Producto</span>
+                    <span class="value" id="kardexProducto">-</span>
+                </div>
+                <div class="kardex-resumen-item">
+                    <span class="label">Stock Actual</span>
+                    <span class="value" id="kardexStock">0</span>
+                </div>
+                <div class="kardex-resumen-item">
+                    <span class="label">Costo Promedio</span>
+                    <span class="value highlight" id="kardexCostoPromedio">0.00</span>
+                </div>
+                <div class="kardex-resumen-item">
+                    <span class="label">Valor Inventario</span>
+                    <span class="value highlight" id="kardexValorInv">0.00</span>
+                </div>
+            </div>
+
+            <!-- Tabla Kardex -->
+            <div class="table-container">
+                <table id="tablaKardex" style="display:none">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Fecha</th>
+                            <th rowspan="2">Tipo</th>
+                            <th colspan="3" class="th-group entrada">ENTRADA</th>
+                            <th colspan="3" class="th-group salida">SALIDA</th>
+                            <th colspan="3" class="th-group saldo">SALDO INVENTARIO</th>
+                        </tr>
+                        <tr>
+                            <th class="th-sub">Cantidad</th><th class="th-sub">Costo</th><th class="th-sub">Total</th>
+                            <th class="th-sub">Cantidad</th><th class="th-sub">Costo</th><th class="th-sub">Total</th>
+                            <th class="th-sub">Cantidad</th><th class="th-sub">Valor</th><th class="th-sub">Costo Prom.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyKardex"></tbody>
+                </table>
+            </div>
+            <div class="watermark" id="watermarkKardex">
+                <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV Llantas">
             </div>
         </section>
     </main>
@@ -133,7 +196,7 @@
     <div class="modal-overlay" id="modalEntradaLlanta">
         <div class="modal modal-lg">
             <div class="modal-header">
-                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV">
+                <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV">
                 <h3>AGV NEUTECNICA E.I.R.L.</h3>
                 <button class="modal-close" onclick="cerrarModal('modalEntradaLlanta')">&times;</button>
             </div>
@@ -152,9 +215,24 @@
                         <select id="entLlantaFormaPago"><option value="">Seleccionar...</option><option value="EFECTIVO">Efectivo</option><option value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</option><option value="YAPE">Yape</option><option value="PLIN">Plin</option><option value="TARJETA">Tarjeta</option></select>
                     </div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Moneda</label>
+                        <select id="entLlantaMoneda" onchange="toggleTipoCambio()">
+                            <option value="SOL">Soles (S/)</option>
+                            <option value="DOL">Dolares ($)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grupTipoCambio" style="display:none">
+                        <label>Tipo de Cambio</label>
+                        <input type="number" id="entLlantaTipoCambio" step="0.0001" min="0" placeholder="Ej: 3.72" onchange="recalcularTotalEL()">
+                    </div>
+                </div>
                 <div class="detalle-section">
                     <div class="detalle-header"><span>Detalle de Productos</span><button class="btn btn-sm btn-add" onclick="agregarFilaDetalleLlanta()"><i class="fas fa-plus"></i> Agregar Item</button></div>
-                    <table class="detalle-table"><thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Medida</th><th>Tipo</th><th>Cantidad</th><th>P. Unit.</th><th>P. Total</th><th></th></tr></thead><tbody id="detalleEntradaLlanta"></tbody></table>
+                    <table class="detalle-table">
+                        <thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Medida</th><th>Tipo</th><th>Cant.</th><th>Costo Unit.</th><th>Costo S/</th><th>Costo Total</th><th></th></tr></thead>
+                        <tbody id="detalleEntradaLlanta"></tbody>
+                    </table>
                     <div class="detalle-total"><span>TOTAL</span><span id="totalEntradaLlanta">0.00</span></div>
                 </div>
             </div>
@@ -169,7 +247,7 @@
     <div class="modal-overlay" id="modalEntradaServicio">
         <div class="modal modal-lg">
             <div class="modal-header">
-                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV">
+                <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV">
                 <h3>AGV NEUTECNICA E.I.R.L.</h3>
                 <button class="modal-close" onclick="cerrarModal('modalEntradaServicio')">&times;</button>
             </div>
@@ -205,7 +283,7 @@
     <div class="modal-overlay" id="modalOrdenServicio">
         <div class="modal modal-lg">
             <div class="modal-header">
-                <img src="img/Imagen_sin_fondo_AGV_(negro).png" alt="AGV">
+                <img src="img/Imagen_sin_fondo_AGV.png" alt="AGV">
                 <h3>AGV NEUTECNICA E.I.R.L.</h3>
                 <button class="modal-close" onclick="cerrarModal('modalOrdenServicio')">&times;</button>
             </div>
@@ -265,6 +343,7 @@
     <script src="js/llantas.js"></script>
     <script src="js/servicios.js"></script>
     <script src="js/ordenes.js"></script>
+    <script src="js/kardex.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
