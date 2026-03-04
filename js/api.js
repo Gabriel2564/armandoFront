@@ -29,6 +29,14 @@ const api = {
         registrar: (data) => fetchJSON(`${API_BASE}/entradas/servicios`, 'POST', data),
         eliminar: (id) => fetchJSON(`${API_BASE}/entradas/servicios/${id}`, 'DELETE'),
     },
+    ventasLlantas: {
+        listar: () => fetchJSON(`${API_BASE}/ventas/llantas`),
+        obtener: (id) => fetchJSON(`${API_BASE}/ventas/llantas/${id}`),
+        buscarCliente: (cliente) => fetchJSON(`${API_BASE}/ventas/llantas/buscar/cliente?cliente=${encodeURIComponent(cliente)}`),
+        buscarPlaca: (placa) => fetchJSON(`${API_BASE}/ventas/llantas/buscar/placa?placa=${encodeURIComponent(placa)}`),
+        registrar: (data) => fetchJSON(`${API_BASE}/ventas/llantas`, 'POST', data),
+        eliminar: (id) => fetchJSON(`${API_BASE}/ventas/llantas/${id}`, 'DELETE'),
+    },
     ordenes: {
         listar: () => fetchJSON(`${API_BASE}/ordenes`),
         obtener: (id) => fetchJSON(`${API_BASE}/ordenes/${id}`),

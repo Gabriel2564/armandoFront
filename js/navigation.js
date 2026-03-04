@@ -139,6 +139,6 @@ document.addEventListener('keydown', function (e) {
             autocompletarServicioOrden(input);
         }
     } else if (tbodyId === 'detalleSalidaLlanta') {
-        if (typeof autocompletarLlantaSalida === 'function') autocompletarLlantaSalida(input);
+        if (typeof autocompletarLlantaSL === 'function') autocompletarLlantaSL(input);
     }
 });
