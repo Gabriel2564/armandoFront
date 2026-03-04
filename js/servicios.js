@@ -19,6 +19,12 @@ function renderStockServicios(servicios) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa;">No hay servicios registrados</td></tr>';
         return;
     }
+    // Ordenar: productos con stock primero
+    servicios.sort(function (a, b) {
+        if (a.stock > 0 && b.stock <= 0) return -1;
+        if (a.stock <= 0 && b.stock > 0) return 1;
+        return 0;
+    });
     tbody.innerHTML = servicios.map(function (s) {
         var cls = s.stock > 0 ? 'positive' : s.stock === 0 ? 'zero' : 'negative';
         return '<tr>' +
@@ -87,9 +93,25 @@ function abrirModalEntradaServicio() {
     document.getElementById('entServicioFormaPago').value = '';
     document.getElementById('detalleEntradaServicio').innerHTML = '';
     document.getElementById('totalEntradaServicio').textContent = '0.00';
+    // Reset comprobante buttons
+    var tipoComp = document.getElementById('entServicioTipoComprobante');
+    if (tipoComp) tipoComp.value = '';
+    document.querySelectorAll('#comprobanteBtnsEntServ .btn-comprobante').forEach(function (b) { b.classList.remove('active'); });
     cargarServiciosCache();
     agregarFilaDetalleServicio();
     abrirModal('modalEntradaServicio');
+}
+
+function seleccionarComprobanteEntServ(tipo) {
+    var tipoComp = document.getElementById('entServicioTipoComprobante');
+    if (tipoComp) tipoComp.value = tipo;
+    document.querySelectorAll('#comprobanteBtnsEntServ .btn-comprobante').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.tipo === tipo);
+    });
+    var prefijos = { 'FACTURA': 'F001-', 'TICKET': 'T001-' };
+    var campo = document.getElementById('entServicioFactura');
+    campo.value = prefijos[tipo] || '';
+    campo.focus();
 }
 
 function agregarFilaDetalleServicio() {

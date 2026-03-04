@@ -1,44 +1,67 @@
 function initNavigation() {
-    document.querySelectorAll('.nav-item').forEach(function (item) {
+    // Submenu links
+    document.querySelectorAll('.nav-submenu a').forEach(function (item) {
         item.addEventListener('click', function (e) {
             e.preventDefault();
             navigateTo(item.dataset.section);
         });
     });
-    document.querySelectorAll('.tabs').forEach(function (tabGroup) {
-        tabGroup.querySelectorAll('.tab').forEach(function (tab) {
-            tab.addEventListener('click', function () {
-                switchTab(tabGroup, tab.dataset.tab);
-            });
+    // Simple nav items (Kardex)
+    document.querySelectorAll('.nav-item-simple').forEach(function (item) {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            navigateTo(item.dataset.section);
         });
     });
 }
 
-function navigateTo(section) {
-    document.querySelectorAll('.nav-item').forEach(function (item) {
-        item.classList.toggle('active', item.dataset.section === section);
-    });
-    document.querySelectorAll('.section').forEach(function (sec) {
-        sec.classList.add('hidden');
-    });
-    var map = { 'llantas': 'seccionLlantas', 'servicios': 'seccionServicios', 'salidas': 'seccionSalidas', 'kardex': 'seccionKardex' };
-    var target = document.getElementById(map[section]);
-    if (target) target.classList.remove('hidden');
-
-    if (section === 'llantas') { cargarEntradasLlantas(); cargarStockLlantas(); }
-    else if (section === 'servicios') { cargarEntradasServicios(); cargarStockServicios(); }
-    else if (section === 'salidas') { cargarOrdenes(); }
-    else if (section === 'kardex') { cargarLlantasCache(); }
+function toggleNavGroup(groupId) {
+    var group = document.getElementById(groupId);
+    group.classList.toggle('open');
 }
 
-function switchTab(tabGroup, targetTab) {
-    var section = tabGroup.closest('.section');
-    tabGroup.querySelectorAll('.tab').forEach(function (t) {
-        t.classList.toggle('active', t.dataset.tab === targetTab);
-    });
-    section.querySelectorAll('.tab-content').forEach(function (c) {
-        c.classList.toggle('active', c.id === targetTab);
-    });
+function navigateTo(section) {
+    // Clear all active states
+    document.querySelectorAll('.nav-submenu a').forEach(function (a) { a.classList.remove('active'); });
+    document.querySelectorAll('.nav-group-title').forEach(function (t) { t.classList.remove('active'); });
+    document.querySelectorAll('.nav-item-simple').forEach(function (t) { t.classList.remove('active'); });
+
+    // Set active on clicked link
+    var link = document.querySelector('[data-section="' + section + '"]');
+    if (link) {
+        link.classList.add('active');
+        // Also activate parent group title
+        var group = link.closest('.nav-group');
+        if (group) {
+            group.classList.add('open');
+            group.querySelector('.nav-group-title').classList.add('active');
+        }
+    }
+
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(function (sec) { sec.classList.add('hidden'); });
+
+    // Show target section
+    var sectionMap = {
+        'llantas-entradas': 'seccionLlantasEntradas',
+        'llantas-salidas': 'seccionLlantasSalidas',
+        'llantas-stock': 'seccionLlantasStock',
+        'servicios-entradas': 'seccionServiciosEntradas',
+        'servicios-salidas': 'seccionServiciosSalidas',
+        'servicios-stock': 'seccionServiciosStock',
+        'kardex': 'seccionKardex'
+    };
+    var target = document.getElementById(sectionMap[section]);
+    if (target) target.classList.remove('hidden');
+
+    // Load data
+    if (section === 'llantas-entradas') { cargarEntradasLlantas(); }
+    else if (section === 'llantas-salidas') { if (typeof cargarSalidasLlantas === 'function') cargarSalidasLlantas(); }
+    else if (section === 'llantas-stock') { cargarStockLlantas(); }
+    else if (section === 'servicios-entradas') { cargarEntradasServicios(); }
+    else if (section === 'servicios-salidas') { cargarOrdenes(); }
+    else if (section === 'servicios-stock') { cargarStockServicios(); }
+    else if (section === 'kardex') { if (typeof cargarLlantasCache === 'function') cargarLlantasCache(); }
 }
 
 function abrirModal(modalId) {
@@ -93,20 +116,12 @@ document.addEventListener('keydown', function (e) {
 
     e.preventDefault();
 
-    // Cerrar dropdown
     var dropdown = input.nextElementSibling;
     if (dropdown) dropdown.classList.remove('active');
 
-    // Si es el buscador del Kardex (no esta dentro de un tr)
     var tr = input.closest('tr');
-    if (!tr) {
-        if (input.id === 'kardexBuscarLlanta') {
-            cargarKardex();
-        }
-        return;
-    }
-
-    var tbody = tr.closest('tbody');
+    var tbody = tr ? tr.closest('tbody') : null;
+    if (!tbody) return;
     var codigo = input.value.trim();
     if (!codigo) return;
 
@@ -123,5 +138,7 @@ document.addEventListener('keydown', function (e) {
         } else {
             autocompletarServicioOrden(input);
         }
+    } else if (tbodyId === 'detalleSalidaLlanta') {
+        if (typeof autocompletarLlantaSalida === 'function') autocompletarLlantaSalida(input);
     }
 });

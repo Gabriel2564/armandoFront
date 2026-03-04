@@ -3,7 +3,9 @@ var contadorDetalleOrden = 0;
 /* ====== LISTAR ORDENES ====== */
 async function cargarOrdenes() {
     try {
-        var ordenes = await api.ordenes.listar();
+        var todas = await api.ordenes.listar();
+        // Solo mostrar ordenes CON placa (verdaderas OS)
+        var ordenes = todas.filter(function (o) { return o.placa && o.placa.trim() !== '' && o.placa !== '-'; });
         renderOrdenes(ordenes);
     } catch (err) { showToast('Error cargando ordenes de servicio', 'error'); }
 }
@@ -122,40 +124,19 @@ function buscarServicioOrden(input) {
     closeDropdownOnClickOutside(input, dropdown);
 }
 
-async function seleccionarProductoOrden(option) {
+function seleccionarProductoOrden(option) {
     var tr = option.closest('tr');
     var input = tr.querySelector('.select-search-wrapper input');
     input.value = option.dataset.codigo;
     input.dataset.id = option.dataset.id;
     input.dataset.tipo = option.dataset.tipo;
     tr.querySelector('.desc-field').value = option.dataset.producto;
-    option.closest('.select-search-dropdown').classList.remove('active');
-
-    var tipo = option.dataset.tipo;
-    var id = option.dataset.id;
-
-    if (tipo === 'servicio') {
-        // Servicios: usar precio del maestro si existe
-        var precio = parseFloat(option.dataset.precio) || 0;
-        if (precio > 0) {
-            tr.querySelector('.pu-field').value = precio;
-            recalcularTotalOrden();
-        }
-    } else if (tipo === 'llanta') {
-        // Llantas: consultar costo promedio y sugerir +25%
-        try {
-            var resumen = await api.costos.resumen(parseInt(id));
-            if (resumen.costoPromedio && parseFloat(resumen.costoPromedio) > 0) {
-                var costoPromedio = parseFloat(resumen.costoPromedio);
-                var precioSugerido = Math.round(costoPromedio * 1.25 * 100) / 100;
-                tr.querySelector('.pu-field').value = precioSugerido;
-                recalcularTotalOrden();
-            }
-        } catch (err) {
-            // Si no hay costo promedio, dejar en 0 para que ingrese manual
-            console.log('Sin costo promedio para llanta ' + id);
-        }
+    var precio = parseFloat(option.dataset.precio) || 0;
+    if (precio > 0) {
+        tr.querySelector('.pu-field').value = precio;
+        recalcularTotalOrden();
     }
+    option.closest('.select-search-dropdown').classList.remove('active');
 }
 
 function recalcularTotalOrden() {
@@ -220,29 +201,14 @@ async function guardarOrdenServicio() {
     } catch (err) { showToast(err.message, 'error'); }
 }
 
-/* ====== VER DETALLE ORDEN (con ganancia y margen) ====== */
+/* ====== VER DETALLE ORDEN ====== */
 async function verOrdenServicio(id) {
     try {
         var o = await api.ordenes.obtener(id);
-        document.getElementById('verDetalleTitulo').textContent = 'ORDEN DE SERVICIO ' + o.numeroOrden;
-
-        // Verificar si hay datos de costo
-        var tieneCostos = o.detalles.some(function (d) { return d.costoUnitario && parseFloat(d.costoUnitario) > 0; });
-
+        document.getElementById('verDetalleTitulo').textContent = 'Orden de Servicio     ' + o.numeroOrden;
         var rows = o.detalles.map(function (d, i) {
-            var gananciaStr = '';
-            var margenStr = '';
-            if (tieneCostos && d.costoUnitario != null) {
-                gananciaStr = '<td style="text-align:right;color:' + (parseFloat(d.ganancia) >= 0 ? '#27ae60' : '#e74c3c') + '">' + formatMoney(d.ganancia) + '</td>';
-                margenStr = '<td style="text-align:right;font-size:10px">' + (d.margen != null ? (parseFloat(d.margen) * 100).toFixed(1) + '%' : '-') + '</td>';
-            }
-            return '<tr><td style="text-align:center">' + (i + 1) + '</td><td><strong>' + d.codigo + '</strong></td><td>' + d.descripcion + '</td><td style="text-align:center">' + d.cantidad + '</td><td style="text-align:right">' + formatMoney(d.precioUnitario) + '</td><td style="text-align:right">' + formatMoney(d.precioTotal) + '</td>' +
-                (tieneCostos ? '<td style="text-align:right;color:#888">' + formatMoney(d.costoUnitario) + '</td>' + gananciaStr + margenStr : '') +
-                '</tr>';
+            return '<tr><td style="text-align:center">' + (i + 1) + '</td><td><strong>' + d.codigo + '</strong></td><td>' + d.descripcion + '</td><td style="text-align:center">' + d.cantidad + '</td><td style="text-align:right">' + formatMoney(d.precioUnitario) + '</td><td style="text-align:right">' + formatMoney(d.precioTotal) + '</td></tr>';
         }).join('');
-
-        var headerExtra = tieneCostos ? '<th>Costo</th><th>Ganancia</th><th>Margen</th>' : '';
-
         document.getElementById('verDetalleContenido').innerHTML =
             '<div class="ver-info-grid">' +
             '<div class="ver-info-item"><span class="ver-info-label">Fecha</span><span class="ver-info-value">' + formatDate(o.fecha) + '</span></div>' +
@@ -250,7 +216,7 @@ async function verOrdenServicio(id) {
             '<div class="ver-info-item full"><span class="ver-info-label">Cliente</span><span class="ver-info-value">' + (o.cliente || '-') + '</span></div>' +
             '<div class="ver-info-item"><span class="ver-info-label">Placa</span><span class="ver-info-value">' + (o.placa || '-') + '</span></div>' +
             '</div>' +
-            '<table class="detalle-table ver-detalle-table"><thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Cantidad</th><th>P. Unit.</th><th>P. Total</th>' + headerExtra + '</tr></thead><tbody>' + rows + '</tbody></table>' +
+            '<table class="detalle-table ver-detalle-table"><thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Cantidad</th><th>P. Unit.</th><th>P. Total</th></tr></thead><tbody>' + rows + '</tbody></table>' +
             '<div class="ver-total-row"><span>TOTAL</span><span>' + formatMoney(o.total) + '</span></div>' +
             '<div class="forma-pago-row"><strong>Forma de pago</strong>&nbsp;&nbsp;&nbsp;&nbsp;' + formatFormaPago(o.formaPago) + '</div>';
         abrirModal('modalVerDetalle');
@@ -267,7 +233,7 @@ async function eliminarOrden(id) {
 }
 
 /* Autocompletar llanta en orden al presionar Enter */
-async function autocompletarLlantaOrden(input) {
+function autocompletarLlantaOrden(input) {
     var codigo = input.value.trim();
     if (!codigo) return;
     var codigoUpper = codigo.toUpperCase();
@@ -285,16 +251,6 @@ async function autocompletarLlantaOrden(input) {
         input.dataset.id = found.id;
         input.dataset.tipo = 'llanta';
         tr.querySelector('.desc-field').value = found.producto;
-
-        // Sugerir precio con +25% sobre costo promedio
-        try {
-            var resumen = await api.costos.resumen(found.id);
-            if (resumen.costoPromedio && parseFloat(resumen.costoPromedio) > 0) {
-                var precioSugerido = Math.round(parseFloat(resumen.costoPromedio) * 1.25 * 100) / 100;
-                tr.querySelector('.pu-field').value = precioSugerido;
-                recalcularTotalOrden();
-            }
-        } catch (err) { /* sin costo, dejar manual */ }
     } else {
         showToast('No se encontro llanta con codigo: ' + codigo, 'warning');
     }

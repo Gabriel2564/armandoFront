@@ -36,6 +36,7 @@ const api = {
         buscarPlaca: (placa) => fetchJSON(`${API_BASE}/ordenes/buscar/placa?placa=${encodeURIComponent(placa)}`),
         registrar: (data) => fetchJSON(`${API_BASE}/ordenes`, 'POST', data),
         eliminar: (id) => fetchJSON(`${API_BASE}/ordenes/${id}`, 'DELETE'),
+        siguienteNumero: () => fetchJSON(`${API_BASE}/ordenes/siguiente-numero`),
     },
     costos: {
         kardex: (llantaId) => fetchJSON(`${API_BASE}/costos/kardex/${llantaId}`),
