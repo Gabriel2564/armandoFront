@@ -19,7 +19,6 @@
         }
         .btn-comprobante:hover { border-color: #aaa; color: #333; }
         .btn-comprobante.active { border-color: var(--primary, #e67e22); background: var(--primary, #e67e22); color: #fff; }
-        /* Sidebar submenu */
         .nav-group { margin-bottom: 2px; }
         .nav-group-title {
             display: flex; align-items: center; padding: 12px 20px; color: rgba(255,255,255,0.7);
@@ -46,6 +45,74 @@
         }
         .nav-item-simple:hover { background: rgba(255,255,255,0.08); color: #fff; }
         .nav-item-simple.active { color: #fff; background: rgba(255,255,255,0.1); border-left-color: var(--primary, #e67e22); }
+        /* Modal extra ancho para entrada llantas */
+        .modal-xl { max-width: 1100px; }
+        /* Mayusculas automaticas en todos los inputs de texto (excepto busqueda de productos) */
+        .form-group input[type="text"],
+        .form-group input[type="search"],
+        .form-group input:not([type="date"]):not([type="password"]):not([type="email"]):not([type="hidden"]) {
+            text-transform: uppercase;
+        }
+        /* Quitar flechas de inputs tipo number en tabla detalle */
+        .detalle-table input[type="number"]::-webkit-inner-spin-button,
+        .detalle-table input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .detalle-table input[type="number"] { -moz-appearance: textfield; }
+        /* Tipo de cambio sin flechas */
+        #entLlantaTipoCambio::-webkit-inner-spin-button,
+        #entLlantaTipoCambio::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        #entLlantaTipoCambio { -moz-appearance: textfield; }
+        /* desc-field: ocupa el espacio disponible, altura igual a los demas inputs */
+        .detalle-table .desc-field {
+            min-width: 0; width: 100%;
+            min-height: unset; height: 27px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            box-sizing: border-box;
+        }
+        /* Codigo col mas ancho */
+        .detalle-table .select-search-wrapper { min-width: 110px; }
+        /* Dropdown horizontal para busqueda de llantas */
+        .select-search-dropdown.dropdown-horizontal {
+            display: none; position: fixed;
+            background: var(--white); border: 1.5px solid var(--primary);
+            border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+            z-index: 99999;
+            flex-wrap: wrap; gap: 6px; padding: 8px;
+            max-width: 680px; min-width: 320px;
+        }
+        .select-search-dropdown.dropdown-horizontal.active { display: flex; }
+        .llanta-opt {
+            display: flex; flex-direction: column;
+            padding: 6px 10px; border-radius: 5px;
+            cursor: pointer; border: 1px solid var(--border);
+            background: #fafafa; transition: all 0.15s;
+            min-width: 140px; max-width: 200px;
+        }
+        .llanta-opt:hover { background: var(--primary-light); border-color: var(--primary); }
+        .llanta-opt-code { font-weight: 700; font-size: 11px; color: var(--primary); }
+        .llanta-opt-desc { font-size: 9px; color: var(--text-light); margin-top: 2px; line-height: 1.3; }
+        .llanta-opt-none { font-size: 11px; color: #aaa; padding: 6px 8px; }
+        /* Z-index correcto por fila activa */
+        #detalleEntradaLlanta tr, #detalleSalidaLlanta tr { position: relative; z-index: 1; }
+        #detalleEntradaLlanta tr:focus-within, #detalleSalidaLlanta tr:focus-within { z-index: 100; }
+        /* Campos de costo: ancho fijo compacto (solo un poco mas que Cantidad=52px) */
+        .detalle-table .cu-dol-field,
+        .detalle-table .ct-dol-field,
+        .detalle-table .cu-sol-field,
+        .detalle-table .ct-sol-field { width: 80px; text-align: right; }
+        /* Reporte tabla - scroll horizontal */
+        .reporte-table-wrapper { overflow-x: auto; }
+        .reporte-table-wrapper table { min-width: 900px; font-size: 12px; }
+        .reporte-table-wrapper th { white-space: nowrap; font-size: 11px; padding: 8px 10px; }
+        .reporte-table-wrapper td { white-space: nowrap; padding: 7px 10px; }
+        /* Badge moneda */
+        .badge-moneda { display:inline-block; padding:1px 7px; border-radius:3px; font-size:10px; font-weight:700; }
+        .badge-moneda.dol { background:rgba(46,204,113,0.15); color:#27ae60; }
+        .badge-moneda.sol { background:rgba(52,152,219,0.15); color:#2980b9; }
+        /* Reporte header con botón exportar */
+        .reporte-header-acciones { display:flex; align-items:center; gap:10px; }
+        .btn-export { padding:7px 14px; border:1.5px solid #27ae60; border-radius:6px; background:#fff;
+            color:#27ae60; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+        .btn-export:hover { background:#27ae60; color:#fff; }
     </style>
 </head>
 <body>
@@ -79,6 +146,17 @@
             <a href="#" class="nav-item-simple" data-section="kardex">
                 <i class="fas fa-chart-line"></i><span>Kardex</span>
             </a>
+            <div class="nav-group" id="navGroupReportes">
+                <div class="nav-group-title" onclick="toggleNavGroup('navGroupReportes')">
+                    <i class="fas fa-file-alt"></i><span>Reportes</span><i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="nav-submenu">
+                    <a href="#" data-section="reporte-llantas-entradas">Llantas - Entradas</a>
+                    <a href="#" data-section="reporte-llantas-salidas">Llantas - Salidas</a>
+                    <a href="#" data-section="reporte-servicios-entradas">Servicios - Entradas</a>
+                    <a href="#" data-section="reporte-servicios-salidas">Servicios - Salidas</a>
+                </div>
+            </div>
         </nav>
     </aside>
 
@@ -105,7 +183,7 @@
             <div class="content-header">
                 <h2>Salidas de Llantas</h2>
                 <div class="header-actions">
-                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="buscarSalidaLlanta" placeholder="Buscar por cliente..."></div>
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="buscarSalidaLlanta" placeholder="Buscar por cliente..." oninput="buscarSalidasLlantas()"></div>
                     <button class="btn btn-primary" onclick="abrirModalSalidaLlanta()"><i class="fas fa-plus"></i> Nueva Salida</button>
                 </div>
             </div>
@@ -126,7 +204,7 @@
             </div>
             <div class="table-container">
                 <table id="tablaStockLlantas">
-                    <thead><tr><th>Codigo</th><th>Producto</th><th>Medida</th><th>Tipo</th><th>Proveedor</th><th>Entradas</th><th>Salidas</th><th>Stock</th><th>Costo Prom.</th><th>Valor Inv.</th></tr></thead>
+                    <thead><tr><th>Codigo</th><th>Producto</th><th>Medida</th><th>Tipo</th><th>Proveedor</th><th>Entradas</th><th>Salidas</th><th>Stock</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -219,11 +297,144 @@
             </div>
             <div class="watermark" id="watermarkKardex"><img src="img/Imagen_sin_fondo_AGV.png" alt="AGV Llantas"></div>
         </section>
+
+        <!-- ===== REPORTE: ENTRADAS LLANTAS ===== -->
+        <section class="section hidden" id="seccionReporteLlantasEntradas">
+            <div class="content-header">
+                <h2>Reporte — Entradas de Llantas</h2>
+                <div class="reporte-header-acciones">
+                    <button class="btn-export" onclick="exportarCSV('tablaReporteEntLlantas','reporte_entradas_llantas')"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+                </div>
+            </div>
+            <div class="reporte-table-wrapper table-container">
+                <table id="tablaReporteEntLlantas">
+                    <thead>
+                        <tr>
+                            <th>Factura</th>
+                            <th>Fecha</th>
+                            <th>Mes</th>
+                            <th>Año</th>
+                            <th>Proveedor</th>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Moneda</th>
+                            <th>Costo Uni</th>
+                            <th>Costo Total</th>
+                            <th>TC</th>
+                            <th>Costo Sunat</th>
+                            <th>Costo Uni S/</th>
+                            <th>Condición</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== REPORTE: SALIDAS LLANTAS ===== -->
+        <section class="section hidden" id="seccionReporteLlantasSalidas">
+            <div class="content-header">
+                <h2>Reporte — Salidas de Llantas</h2>
+                <div class="reporte-header-acciones">
+                    <button class="btn-export" onclick="exportarCSV('tablaReporteSalLlantas','reporte_salidas_llantas')"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+                </div>
+            </div>
+            <div class="reporte-table-wrapper table-container">
+                <table id="tablaReporteSalLlantas">
+                    <thead>
+                        <tr>
+                            <th>Comprobante</th>
+                            <th>Tipo Doc</th>
+                            <th>Fecha</th>
+                            <th>Mes</th>
+                            <th>Año</th>
+                            <th>RUC</th>
+                            <th>Cliente</th>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Pre. Uni</th>
+                            <th>Pre. Total</th>
+                            <th>Condición</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== REPORTE: ENTRADAS SERVICIOS ===== -->
+        <section class="section hidden" id="seccionReporteServiciosEntradas">
+            <div class="content-header">
+                <h2>Reporte — Entradas de Servicios</h2>
+                <div class="reporte-header-acciones">
+                    <button class="btn-export" onclick="exportarCSV('tablaReporteEntServicios','reporte_entradas_servicios')"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+                </div>
+            </div>
+            <div class="reporte-table-wrapper table-container">
+                <table id="tablaReporteEntServicios">
+                    <thead>
+                        <tr>
+                            <th>Factura</th>
+                            <th>Fecha</th>
+                            <th>Mes</th>
+                            <th>Año</th>
+                            <th>Proveedor</th>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Costo Uni</th>
+                            <th>Costo Total</th>
+                            <th>Condición</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== REPORTE: SALIDAS SERVICIOS ===== -->
+        <section class="section hidden" id="seccionReporteServiciosSalidas">
+            <div class="content-header">
+                <h2>Reporte — Salidas de Servicios (Órdenes)</h2>
+                <div class="reporte-header-acciones">
+                    <button class="btn-export" onclick="exportarCSV('tablaReporteSalServicios','reporte_salidas_servicios')"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+                </div>
+            </div>
+            <div class="reporte-table-wrapper table-container">
+                <table id="tablaReporteSalServicios">
+                    <thead>
+                        <tr>
+                            <th>N° Orden</th>
+                            <th>Servicio</th>
+                            <th>Fecha</th>
+                            <th>Mes</th>
+                            <th>Año</th>
+                            <th>Cliente</th>
+                            <th>Placa</th>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Pre. Uni</th>
+                            <th>Pre. Total</th>
+                            <th>Costo Uni</th>
+                            <th>Costo Total</th>
+                            <th>Ganancia</th>
+                            <th>Condición</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
     </main>
 
     <!-- ===== MODAL: ENTRADA LLANTA ===== -->
     <div class="modal-overlay" id="modalEntradaLlanta">
-        <div class="modal modal-lg">
+        <div class="modal modal-xl">
             <div class="modal-header"><img src="img/Imagen_sin_fondo_AGV.png" alt="AGV"><h3>AGV NEUTECNICA E.I.R.L.</h3><button class="modal-close" onclick="cerrarModal('modalEntradaLlanta')">&times;</button></div>
             <div class="modal-title-bar">COMPRA LLANTAS</div>
             <div class="modal-body">
@@ -239,13 +450,30 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Moneda</label><select id="entLlantaMoneda" onchange="toggleTipoCambio()"><option value="SOL">Soles (S/)</option><option value="DOL">Dolares ($)</option></select></div>
-                    <div class="form-group" id="grupTipoCambio" style="display:none"><label>Tipo de Cambio</label><input type="number" id="entLlantaTipoCambio" step="0.01" placeholder="Ej: 3.72" onchange="recalcularCostosEL()"></div>
+                    <div class="form-group"><label>Moneda</label>
+                        <select id="entLlantaMoneda" onchange="toggleTipoCambio()">
+                            <option value="SOL">Soles (S/)</option>
+                            <option value="DOL">Dolares ($)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grupTipoCambio" style="display:none"><label>Tipo de Cambio</label>
+                        <input type="text" id="entLlantaTipoCambio" inputmode="decimal" placeholder="Ej: 3.720" oninput="recalcularCostosEL()">
+                    </div>
                 </div>
                 <div class="detalle-section">
                     <div class="detalle-header"><span>Detalle de Productos</span><button class="btn btn-sm btn-add" onclick="agregarFilaDetalleLlanta()"><i class="fas fa-plus"></i> Agregar Item</button></div>
-                    <table class="detalle-table"><thead><tr><th>Item</th><th>Codigo</th><th>Descripcion</th><th>Cant.</th><th>Costo Unit.</th><th style="display:none">Costo S/</th><th>Costo Total</th><th></th></tr></thead><tbody id="detalleEntradaLlanta"></tbody></table>
-                    <div class="detalle-total"><span>TOTAL</span><span id="totalEntradaLlanta">0.00</span></div>
+                    <table class="detalle-table" id="tablaDetalleEL">
+                        <thead>
+                            <tr>
+                                <th>Item</th><th>Codigo</th><th>Descripcion</th><th>Cant.</th>
+                                <th class="col-dol" style="display:none">Costo Unit.$</th>
+                                <th class="col-dol" style="display:none">Costo Total$</th>
+                                <th>Costo Unit. S/</th><th>Costo Total S/</th><th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="detalleEntradaLlanta"></tbody>
+                    </table>
+                    <div class="detalle-total"><span>TOTAL S/</span><span id="totalEntradaLlanta">0.00</span></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -257,7 +485,7 @@
 
     <!-- ===== MODAL: SALIDA LLANTA (Venta directa) ===== -->
     <div class="modal-overlay" id="modalSalidaLlanta">
-        <div class="modal modal-lg">
+        <div class="modal modal-xl">
             <div class="modal-header"><img src="img/Imagen_sin_fondo_AGV.png" alt="AGV"><h3>AGV NEUTECNICA E.I.R.L.</h3><button class="modal-close" onclick="cerrarModal('modalSalidaLlanta')">&times;</button></div>
             <div class="modal-title-bar">VENTA DE LLANTAS</div>
             <div class="modal-body">
@@ -400,6 +628,7 @@
     <script src="js/ordenes.js"></script>
     <script src="js/salidasLlantas.js"></script>
     <script src="js/kardex.js"></script>
+    <script src="js/reportes.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

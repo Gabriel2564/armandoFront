@@ -19,7 +19,6 @@ function renderStockLlantas(llantas) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa;">No hay llantas registradas</td></tr>';
         return;
     }
-    // Ordenar: productos con stock primero
     llantas.sort(function (a, b) {
         if (a.stock > 0 && b.stock <= 0) return -1;
         if (a.stock <= 0 && b.stock > 0) return 1;
@@ -43,7 +42,8 @@ function renderStockLlantas(llantas) {
 async function buscarLlantas() {
     var filtro = document.getElementById('buscarLlanta').value.trim();
     try {
-        var llantas = filtro.length >= 2 ? await api.llantas.buscar(filtro) : await api.llantas.listar();
+        var llantas = filtro.length >= 2
+            ? await api.llantas.buscar(filtro) : await api.llantas.listar();
         renderStockLlantas(llantas);
     } catch (err) { showToast('Error buscando llantas', 'error'); }
 }
@@ -90,8 +90,14 @@ function abrirModalEntradaLlanta() {
     document.getElementById('entLlantaFecha').value = todayISO();
     document.getElementById('entLlantaRuc').value = '';
     document.getElementById('entLlantaProveedor').value = '';
-    document.getElementById('entLlantaFactura').value = '';
+    document.getElementById('entLlantaFactura').value = 'F001-';
     document.getElementById('entLlantaFormaPago').value = '';
+    document.getElementById('entLlantaMoneda').value = 'SOL';
+    document.getElementById('entLlantaTipoCambio').value = '';
+    document.getElementById('grupTipoCambio').style.display = 'none';
+    document.querySelectorAll('#tablaDetalleEL .col-dol').forEach(function(el) {
+        el.style.display = 'none';
+    });
     document.getElementById('detalleEntradaLlanta').innerHTML = '';
     document.getElementById('totalEntradaLlanta').textContent = '0.00';
     cargarLlantasCache();
@@ -99,39 +105,115 @@ function abrirModalEntradaLlanta() {
     abrirModal('modalEntradaLlanta');
 }
 
+/* ====== TOGGLE TIPO DE CAMBIO ====== */
+function toggleTipoCambio() {
+    var moneda = document.getElementById('entLlantaMoneda').value;
+    var esDolar = moneda === 'DOL';
+    document.getElementById('grupTipoCambio').style.display = esDolar ? '' : 'none';
+    if (!esDolar) document.getElementById('entLlantaTipoCambio').value = '';
+    document.querySelectorAll('#tablaDetalleEL .col-dol').forEach(function(el) {
+        el.style.display = esDolar ? '' : 'none';
+    });
+    document.querySelectorAll('#detalleEntradaLlanta tr').forEach(function(tr) {
+        tr.querySelectorAll('.col-dol').forEach(function(td) {
+            td.style.display = esDolar ? '' : 'none';
+        });
+    });
+    recalcularCostosEL();
+}
+
+/* ====== AGREGAR FILA DETALLE ====== */
 function agregarFilaDetalleLlanta() {
-    contadorDetalleEL++;
+    // Renumerar siempre desde las filas existentes para evitar huecos al borrar y agregar
+    contadorDetalleEL = document.querySelectorAll('#detalleEntradaLlanta tr').length + 1;
+    var moneda = document.getElementById('entLlantaMoneda').value;
+    var esDolar = moneda === 'DOL';
+    var colDolDisplay = esDolar ? '' : 'none';
     var tbody = document.getElementById('detalleEntradaLlanta');
     var tr = document.createElement('tr');
     tr.innerHTML =
         '<td class="col-item">' + contadorDetalleEL + '</td>' +
         '<td><div class="select-search-wrapper">' +
-        '<input type="text" placeholder="Buscar codigo..." oninput="buscarLlantaSelect(this)" onfocus="buscarLlantaSelect(this)" data-id="">' +
-        '<div class="select-search-dropdown"></div></div></td>' +
-        '<td><input type="text" class="desc-field" readonly></td>' +
-        '<td><input type="text" class="medida-field" readonly style="width:90px"></td>' +
-        '<td><input type="text" class="tipo-field" readonly style="width:80px"></td>' +
-        '<td><input type="number" class="cant-field" value="1" min="1" onchange="recalcularTotalEL()"></td>' +
-        '<td><input type="number" class="pu-field" value="0" step="0.01" min="0" onchange="recalcularTotalEL()"></td>' +
-        '<td><input type="text" class="pt-field" value="0.00" readonly style="width:80px;text-align:right"></td>' +
-        '<td class="col-remove"><button class="btn-remove" onclick="this.closest(\'tr\').remove(); renumerarFilas(\'detalleEntradaLlanta\'); recalcularTotalEL();"><i class="fas fa-times"></i></button></td>';
+        '<input type="text" placeholder="Buscar codigo..." oninput="buscarLlantaSelect(this)" data-id="">' +
+        '<div class="select-search-dropdown dropdown-horizontal"></div></div></td>' +
+        '<td><input type="text" class="desc-field" readonly tabindex="-1"></td>' +
+        '<td><input type="text" inputmode="numeric" class="cant-field" value="1" oninput="recalcularCostosEL()"></td>' +
+        '<td class="col-dol" style="display:' + colDolDisplay + '"><input type="text" inputmode="decimal" class="cu-dol-field" value="" placeholder="Costo $" oninput="recalcularCostosEL()"></td>' +
+        '<td class="col-dol" style="display:' + colDolDisplay + '"><input type="text" class="ct-dol-field" value="0.00" readonly style="text-align:right;background:#f9f9f9"></td>' +
+        '<td><input type="text" inputmode="decimal" class="cu-sol-field" value="" placeholder="Costo S/" oninput="recalcularCostosEL()"></td>' +
+        '<td><input type="text" class="ct-sol-field" value="0.00" readonly style="text-align:right;background:#f9f9f9"></td>' +
+        '<td class="col-remove"><button class="btn-remove" onclick="this.closest(\'tr\').remove(); renumerarFilas(\'detalleEntradaLlanta\'); recalcularCostosEL();"><i class="fas fa-times"></i></button></td>';
     tbody.appendChild(tr);
 }
 
+/* ====== RECALCULAR COSTOS ====== */
+function recalcularCostosEL() {
+    var moneda = document.getElementById('entLlantaMoneda').value;
+    var esDolar = moneda === 'DOL';
+    var tc = parseFloat(document.getElementById('entLlantaTipoCambio').value) || 0;
+    var totalSoles = 0;
+    document.querySelectorAll('#detalleEntradaLlanta tr').forEach(function(tr) {
+        var cant = parseFloat(tr.querySelector('.cant-field').value) || 0;
+        if (esDolar) {
+            var cuDol = parseFloat(tr.querySelector('.cu-dol-field').value) || 0;
+            var ctDol = cant * cuDol;
+            tr.querySelector('.ct-dol-field').value = ctDol.toFixed(2);
+            var cuSol = tc > 0 ? cuDol * tc : 0;
+            var ctSol = cant * cuSol;
+            tr.querySelector('.cu-sol-field').value = cuSol.toFixed(4);
+            tr.querySelector('.ct-sol-field').value = ctSol.toFixed(2);
+            totalSoles += ctSol;
+        } else {
+            var cuSol = parseFloat(tr.querySelector('.cu-sol-field').value) || 0;
+            var ctSol = cant * cuSol;
+            tr.querySelector('.ct-sol-field').value = ctSol.toFixed(2);
+            totalSoles += ctSol;
+        }
+    });
+    document.getElementById('totalEntradaLlanta').textContent = totalSoles.toFixed(2);
+}
+
+function recalcularTotalEL() { recalcularCostosEL(); }
+
+/* ====== BUSCAR LLANTA EN DROPDOWN ====== */
 function buscarLlantaSelect(input) {
-    var filtro = input.value.toLowerCase();
+    var filtro = input.value.trim().toLowerCase();
     var dropdown = input.nextElementSibling;
-    var filtered = llantasCache.filter(function (l) {
-        return l.codigo.toLowerCase().includes(filtro) || l.producto.toLowerCase().includes(filtro);
-    }).slice(0, 10);
+
+    // No mostrar nada si hay menos de 2 caracteres
+    if (filtro.length < 2) {
+        dropdown.innerHTML = '';
+        dropdown.classList.remove('active');
+        return;
+    }
+
+    // Elevar z-index de la fila activa por encima de las demas
+    var allRows = document.querySelectorAll('#detalleEntradaLlanta tr');
+    allRows.forEach(function(r) { r.style.position = 'relative'; r.style.zIndex = '1'; });
+    var currentRow = input.closest('tr');
+    if (currentRow) currentRow.style.zIndex = '100';
+
+    var filtroUp = filtro.toUpperCase();
+    var filtered = llantasCache
+        .filter(function (l) { return l.codigo.toUpperCase().startsWith(filtroUp); })
+        .slice(0, 12);
+
     if (filtered.length === 0) {
-        dropdown.innerHTML = '<div class="select-search-option" style="color:#aaa">Sin resultados</div>';
+        dropdown.innerHTML = '<div class="llanta-opt-none">Sin resultados</div>';
     } else {
         dropdown.innerHTML = filtered.map(function (l) {
-            return '<div class="select-search-option" data-id="' + l.id + '" data-codigo="' + l.codigo + '" data-producto="' + l.producto + '" data-medida="' + (l.medida || '') + '" data-tipo="' + (l.tipo || '') + '" onclick="seleccionarLlanta(this)">' +
-                '<span class="option-code">' + l.codigo + '</span> - <span class="option-desc">' + l.producto + '</span></div>';
+            return '<div class="llanta-opt" data-id="' + l.id + '" data-codigo="' + l.codigo +
+                '" data-producto="' + l.producto + '" data-medida="' + (l.medida || '') +
+                '" data-tipo="' + (l.tipo || '') + '" onclick="seleccionarLlanta(this)">' +
+                '<span class="llanta-opt-code">' + l.codigo + '</span>' +
+                '<span class="llanta-opt-desc">' + l.producto + '</span>' +
+                '</div>';
         }).join('');
     }
+    // Posicionar dropdown relativo al input (fixed, siempre encima de otras filas)
+    var rect = input.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
     dropdown.classList.add('active');
     closeDropdownOnClickOutside(input, dropdown);
 }
@@ -142,32 +224,35 @@ function seleccionarLlanta(option) {
     input.value = option.dataset.codigo;
     input.dataset.id = option.dataset.id;
     tr.querySelector('.desc-field').value = option.dataset.producto;
-    tr.querySelector('.medida-field').value = option.dataset.medida;
-    tr.querySelector('.tipo-field').value = option.dataset.tipo;
     option.closest('.select-search-dropdown').classList.remove('active');
 }
 
-function recalcularTotalEL() {
-    var total = 0;
-    document.querySelectorAll('#detalleEntradaLlanta tr').forEach(function (tr) {
-        var cant = parseFloat(tr.querySelector('.cant-field').value) || 0;
-        var pu = parseFloat(tr.querySelector('.pu-field').value) || 0;
-        var pt = cant * pu;
-        tr.querySelector('.pt-field').value = pt.toFixed(2);
-        total += pt;
-    });
-    document.getElementById('totalEntradaLlanta').textContent = total.toFixed(2);
-}
-
+/* ====== GUARDAR ENTRADA LLANTA ====== */
 async function guardarEntradaLlanta() {
+    var moneda = document.getElementById('entLlantaMoneda').value;
+    var esDolar = moneda === 'DOL';
+    var tc = parseFloat(document.getElementById('entLlantaTipoCambio').value) || null;
+    if (esDolar && !tc) { showToast('Ingresa el Tipo de Cambio para compras en dolares', 'warning'); return; }
     var detalles = [];
     var valid = true;
-    document.querySelectorAll('#detalleEntradaLlanta tr').forEach(function (tr) {
+    document.querySelectorAll('#detalleEntradaLlanta tr').forEach(function(tr) {
         var productoId = tr.querySelector('.select-search-wrapper input').dataset.id;
         var cantidad = parseInt(tr.querySelector('.cant-field').value) || 0;
-        var precioUnitario = parseFloat(tr.querySelector('.pu-field').value) || 0;
         if (!productoId || productoId === '') { valid = false; return; }
-        detalles.push({ productoId: parseInt(productoId), cantidad: cantidad, precioUnitario: precioUnitario });
+        var detalle = { productoId: parseInt(productoId), cantidad: cantidad, moneda: moneda };
+        if (esDolar) {
+            var cuDol = parseFloat(tr.querySelector('.cu-dol-field').value) || 0;
+            var cuSol = parseFloat(tr.querySelector('.cu-sol-field').value) || 0;
+            detalle.costoUnitario = cuDol;
+            detalle.tipoCambio = tc;
+            detalle.precioUnitario = parseFloat(cuSol.toFixed(4));
+        } else {
+            var cuSol = parseFloat(tr.querySelector('.cu-sol-field').value) || 0;
+            detalle.costoUnitario = cuSol;
+            detalle.tipoCambio = null;
+            detalle.precioUnitario = cuSol;
+        }
+        detalles.push(detalle);
     });
     if (!valid || detalles.length === 0) { showToast('Selecciona al menos un producto en cada fila', 'warning'); return; }
     var data = {
@@ -219,40 +304,27 @@ async function eliminarEntradaLlanta(id) {
     } catch (err) { showToast(err.message, 'error'); }
 }
 
-/* Autocompletar llanta al presionar Enter o al seleccionar del dropdown */
 function autocompletarLlanta(input) {
     var codigo = input.value.trim();
     if (!codigo) return;
     var codigoUpper = codigo.toUpperCase();
-
-    // Primero cerrar dropdown si esta abierto
     var dropdown = input.nextElementSibling;
     if (dropdown) dropdown.classList.remove('active');
-
-    // Buscar coincidencia exacta (case insensitive)
-    var found = llantasCache.find(function (l) {
-        return l.codigo.toUpperCase() === codigoUpper;
-    });
-    // Si no hay exacta, buscar que empiece con el texto
-    if (!found) {
-        found = llantasCache.find(function (l) {
-            return l.codigo.toUpperCase().startsWith(codigoUpper);
-        });
-    }
-    // Si no, buscar que contenga el texto
-    if (!found) {
-        found = llantasCache.find(function (l) {
-            return l.codigo.toUpperCase().includes(codigoUpper);
-        });
-    }
+    var found = llantasCache.find(function (l) { return l.codigo.toUpperCase() === codigoUpper; });
+    if (!found) { found = llantasCache.find(function (l) { return l.codigo.toUpperCase().startsWith(codigoUpper); }); }
+    if (!found) { found = llantasCache.find(function (l) { return l.codigo.toUpperCase().includes(codigoUpper); }); }
     if (found) {
         var tr = input.closest('tr');
         input.value = found.codigo;
         input.dataset.id = found.id;
         tr.querySelector('.desc-field').value = found.producto;
-        tr.querySelector('.medida-field').value = found.medida || '';
-        tr.querySelector('.tipo-field').value = found.tipo || '';
-    } else {
-        showToast('No se encontro llanta con codigo: ' + codigo, 'warning');
-    }
+    } else { showToast('No se encontro llanta con codigo: ' + codigo, 'warning'); }
+}
+
+function renumerarFilas(tbodyId) {
+    document.querySelectorAll('#' + tbodyId + ' tr').forEach(function (tr, i) {
+        var cell = tr.querySelector('.col-item');
+        if (cell) cell.textContent = i + 1;
+        tr.style.zIndex = '1';
+    });
 }

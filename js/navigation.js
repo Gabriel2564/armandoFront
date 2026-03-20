@@ -1,12 +1,10 @@
 function initNavigation() {
-    // Submenu links
     document.querySelectorAll('.nav-submenu a').forEach(function (item) {
         item.addEventListener('click', function (e) {
             e.preventDefault();
             navigateTo(item.dataset.section);
         });
     });
-    // Simple nav items (Kardex)
     document.querySelectorAll('.nav-item-simple').forEach(function (item) {
         item.addEventListener('click', function (e) {
             e.preventDefault();
@@ -21,16 +19,13 @@ function toggleNavGroup(groupId) {
 }
 
 function navigateTo(section) {
-    // Clear all active states
     document.querySelectorAll('.nav-submenu a').forEach(function (a) { a.classList.remove('active'); });
     document.querySelectorAll('.nav-group-title').forEach(function (t) { t.classList.remove('active'); });
     document.querySelectorAll('.nav-item-simple').forEach(function (t) { t.classList.remove('active'); });
 
-    // Set active on clicked link
     var link = document.querySelector('[data-section="' + section + '"]');
     if (link) {
         link.classList.add('active');
-        // Also activate parent group title
         var group = link.closest('.nav-group');
         if (group) {
             group.classList.add('open');
@@ -38,30 +33,36 @@ function navigateTo(section) {
         }
     }
 
-    // Hide all sections
     document.querySelectorAll('.section').forEach(function (sec) { sec.classList.add('hidden'); });
 
-    // Show target section
     var sectionMap = {
-        'llantas-entradas': 'seccionLlantasEntradas',
-        'llantas-salidas': 'seccionLlantasSalidas',
-        'llantas-stock': 'seccionLlantasStock',
-        'servicios-entradas': 'seccionServiciosEntradas',
-        'servicios-salidas': 'seccionServiciosSalidas',
-        'servicios-stock': 'seccionServiciosStock',
-        'kardex': 'seccionKardex'
+        'llantas-entradas':             'seccionLlantasEntradas',
+        'llantas-salidas':              'seccionLlantasSalidas',
+        'llantas-stock':                'seccionLlantasStock',
+        'servicios-entradas':           'seccionServiciosEntradas',
+        'servicios-salidas':            'seccionServiciosSalidas',
+        'servicios-stock':              'seccionServiciosStock',
+        'kardex':                       'seccionKardex',
+        'reporte-llantas-entradas':     'seccionReporteLlantasEntradas',
+        'reporte-llantas-salidas':      'seccionReporteLlantasSalidas',
+        'reporte-servicios-entradas':   'seccionReporteServiciosEntradas',
+        'reporte-servicios-salidas':    'seccionReporteServiciosSalidas'
     };
+
     var target = document.getElementById(sectionMap[section]);
     if (target) target.classList.remove('hidden');
 
-    // Load data
-    if (section === 'llantas-entradas') { cargarEntradasLlantas(); }
-    else if (section === 'llantas-salidas') { if (typeof cargarSalidasLlantas === 'function') cargarSalidasLlantas(); }
-    else if (section === 'llantas-stock') { cargarStockLlantas(); }
-    else if (section === 'servicios-entradas') { cargarEntradasServicios(); }
-    else if (section === 'servicios-salidas') { cargarOrdenes(); }
-    else if (section === 'servicios-stock') { cargarStockServicios(); }
-    else if (section === 'kardex') { if (typeof cargarLlantasCache === 'function') cargarLlantasCache(); }
+    if (section === 'llantas-entradas')                 { cargarEntradasLlantas(); }
+    else if (section === 'llantas-salidas')             { if (typeof cargarSalidasLlantas === 'function') cargarSalidasLlantas(); }
+    else if (section === 'llantas-stock')               { cargarStockLlantas(); }
+    else if (section === 'servicios-entradas')          { cargarEntradasServicios(); }
+    else if (section === 'servicios-salidas')           { cargarOrdenes(); }
+    else if (section === 'servicios-stock')             { cargarStockServicios(); }
+    else if (section === 'kardex')                      { if (typeof cargarLlantasCache === 'function') cargarLlantasCache(); }
+    else if (section === 'reporte-llantas-entradas')    { cargarReporteEntradasLlantas(); }
+    else if (section === 'reporte-llantas-salidas')     { cargarReporteSalidasLlantas(); }
+    else if (section === 'reporte-servicios-entradas')  { cargarReporteEntradasServicios(); }
+    else if (section === 'reporte-servicios-salidas')   { cargarReporteSalidasServicios(); }
 }
 
 function abrirModal(modalId) {
@@ -74,12 +75,8 @@ function cerrarModal(modalId) {
     document.body.style.overflow = '';
 }
 
-document.addEventListener('click', function (e) {
-    if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
-        e.target.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-});
+// Click fuera del modal NO lo cierra (para evitar perder datos al llenar formularios)
+// Solo se cierra con el boton X, Cancelar, o Escape si no hay formulario activo
 
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
@@ -108,36 +105,23 @@ function renumerarFilas(tbodyId) {
     });
 }
 
-/* ========== LISTENER GLOBAL: Enter en campos de busqueda ========== */
 document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter') return;
     var input = e.target;
     if (!input.closest || !input.closest('.select-search-wrapper')) return;
-
     e.preventDefault();
-
     var dropdown = input.nextElementSibling;
     if (dropdown) dropdown.classList.remove('active');
-
     var tr = input.closest('tr');
     var tbody = tr ? tr.closest('tbody') : null;
     if (!tbody) return;
-    var codigo = input.value.trim();
-    if (!codigo) return;
-
     var tbodyId = tbody.id;
-
-    if (tbodyId === 'detalleEntradaLlanta') {
-        autocompletarLlanta(input);
-    } else if (tbodyId === 'detalleEntradaServicio') {
-        autocompletarServicio(input);
-    } else if (tbodyId === 'detalleOrden') {
+    if (tbodyId === 'detalleEntradaLlanta') { autocompletarLlanta(input); }
+    else if (tbodyId === 'detalleEntradaServicio') { autocompletarServicio(input); }
+    else if (tbodyId === 'detalleOrden') {
         var tipo = input.dataset.tipo || tr.dataset.tipo;
-        if (tipo === 'llanta') {
-            autocompletarLlantaOrden(input);
-        } else {
-            autocompletarServicioOrden(input);
-        }
+        if (tipo === 'llanta') { autocompletarLlantaOrden(input); }
+        else { autocompletarServicioOrden(input); }
     } else if (tbodyId === 'detalleSalidaLlanta') {
         if (typeof autocompletarLlantaSL === 'function') autocompletarLlantaSL(input);
     }

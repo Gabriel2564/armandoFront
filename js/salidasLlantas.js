@@ -104,7 +104,6 @@ function abrirModalSalidaLlanta() {
         document.getElementById('salLlantaFormaPago').value = '';
         document.getElementById('detalleSalidaLlanta').innerHTML = '';
         document.getElementById('totalSalidaLlanta').textContent = '0.00';
-        // Reset botones comprobante
         document.querySelectorAll('#comprobanteBtnsSalLlanta .btn-comprobante').forEach(function (b) {
             b.classList.remove('active');
         });
@@ -123,7 +122,7 @@ function seleccionarComprobanteSL(tipo) {
     document.querySelectorAll('#comprobanteBtnsSalLlanta .btn-comprobante').forEach(function (b) {
         b.classList.toggle('active', b.dataset.tipo === tipo);
     });
-    var prefijos = { 'FACTURA': 'F001-', 'BOLETA': 'B001-', 'TICKET': 'T001-' };
+    var prefijos = { 'FACTURA': 'F001-', 'BOLETA': 'B001-', 'TICKET': 'T001-', 'NOTA_CREDITO': 'NC01-' };
     var campo = document.getElementById('salLlantaNumeroComprobante');
     campo.value = prefijos[tipo] || '';
     campo.focus();
@@ -136,51 +135,75 @@ function agregarFilaSalidaLlanta() {
     var tr = document.createElement('tr');
     tr.innerHTML =
         '<td class="col-item">' + contadorDetalleSL + '</td>' +
-        '<td>' +
-        '<div class="select-search-wrapper">' +
-        '<input type="text" placeholder="Buscar llanta..." oninput="buscarLlantaSL(this)" onfocus="buscarLlantaSL(this)" onkeydown="if(event.key===\'Enter\'){autocompletarLlantaSL(this)}" data-id="">' +
-        '<div class="select-search-dropdown"></div>' +
-        '</div>' +
-        '</td>' +
-        '<td><input type="text" class="desc-field" readonly placeholder="Descripcion"></td>' +
-        '<td><input type="number" class="cant-field" value="1" min="1" oninput="recalcularFilaSL(this)"></td>' +
-        '<td><input type="number" class="pu-field" value="0" min="0" step="0.01" oninput="recalcularFilaSL(this)"></td>' +
-        '<td><input type="number" class="pt-field" value="0.00" readonly></td>' +
+        '<td><div class="select-search-wrapper">' +
+        '<input type="text" placeholder="Buscar llanta..." oninput="buscarLlantaSL(this)" data-id="">' +
+        '<div class="select-search-dropdown dropdown-horizontal"></div>' +
+        '</div></td>' +
+        '<td><input type="text" class="desc-field" readonly tabindex="-1" style="height:27px"></td>' +
+        '<td><input type="text" inputmode="numeric" class="cant-field" value="1" oninput="recalcularFilaSL(this)" style="width:52px;text-align:right"></td>' +
+        '<td><input type="text" inputmode="decimal" class="pu-field" value="" placeholder="0.00" oninput="recalcularFilaSL(this)" style="width:80px;text-align:right"></td>' +
+        '<td><input type="text" class="pt-field" value="0.00" readonly style="width:80px;text-align:right;background:#f9f9f9"></td>' +
         '<td class="col-remove"><button type="button" class="btn-remove" onclick="eliminarFilaSL(this)"><i class="fas fa-times"></i></button></td>';
     tbody.appendChild(tr);
 }
 
-/* ====== BUSCAR LLANTA EN DROPDOWN ====== */
+/* ====== BUSCAR LLANTA EN DROPDOWN (min 2 chars, horizontal, fixed position) ====== */
 function buscarLlantaSL(input) {
-    var filtro = input.value.toLowerCase();
+    var filtro = input.value.trim().toLowerCase();
     var dropdown = input.nextElementSibling;
-    var filtered = llantasCache.filter(function (l) {
-        return l.codigo.toLowerCase().includes(filtro) || l.producto.toLowerCase().includes(filtro);
-    }).slice(0, 10);
+
+    if (filtro.length < 2) {
+        dropdown.innerHTML = '';
+        dropdown.classList.remove('active');
+        return;
+    }
+
+    // Elevar z-index de la fila activa
+    document.querySelectorAll('#detalleSalidaLlanta tr').forEach(function (r) {
+        r.style.position = 'relative'; r.style.zIndex = '1';
+    });
+    var currentRow = input.closest('tr');
+    if (currentRow) currentRow.style.zIndex = '100';
+
+    var filtroUp = filtro.toUpperCase();
+    var filtered = llantasCache
+        .filter(function (l) { return l.codigo.toUpperCase().startsWith(filtroUp); })
+        .slice(0, 12);
+
     if (filtered.length === 0) {
-        dropdown.innerHTML = '<div class="select-search-option" style="color:#aaa">Sin resultados</div>';
+        dropdown.innerHTML = '<div class="llanta-opt-none">Sin resultados</div>';
     } else {
         dropdown.innerHTML = filtered.map(function (l) {
-            return '<div class="select-search-option" data-id="' + l.id + '" data-codigo="' + l.codigo + '" data-producto="' + l.producto + '" onclick="seleccionarLlantaSL(this)">' +
-                '<span class="option-code">' + l.codigo + '</span> - <span class="option-desc">' + l.producto + '</span></div>';
+            return '<div class="llanta-opt" data-id="' + l.id + '" data-codigo="' + l.codigo +
+                '" data-producto="' + l.producto + '" onclick="seleccionarLlantaSL(this)">' +
+                '<span class="llanta-opt-code">' + l.codigo + '</span>' +
+                '<span class="llanta-opt-desc">' + l.producto + '</span>' +
+                '</div>';
         }).join('');
     }
+
+    // Posicionar con fixed para que siempre quede encima
+    var rect = input.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
     dropdown.classList.add('active');
     closeDropdownOnClickOutside(input, dropdown);
 }
 
 /* ====== SELECCIONAR LLANTA DEL DROPDOWN ====== */
 function seleccionarLlantaSL(option) {
-    var tr = option.closest('tr');
-    var input = tr.querySelector('.select-search-wrapper input');
+    var dropdown = option.closest('.select-search-dropdown');
+    var wrapper = dropdown.closest('.select-search-wrapper');
+    var input = wrapper.querySelector('input');
+    var tr = input.closest('tr');
     input.value = option.dataset.codigo;
     input.dataset.id = option.dataset.id;
     tr.querySelector('.desc-field').value = option.dataset.producto;
-    option.closest('.select-search-dropdown').classList.remove('active');
+    dropdown.classList.remove('active');
     tr.querySelector('.cant-field').focus();
 }
 
-/* ====== AUTOCOMPLETAR POR CODIGO ====== */
+/* ====== AUTOCOMPLETAR POR CODIGO (Enter) ====== */
 function autocompletarLlantaSL(input) {
     var codigo = input.value.trim().toUpperCase();
     if (!codigo) return;
@@ -221,10 +244,10 @@ function recalcularTotalSL() {
 function eliminarFilaSL(btn) {
     btn.closest('tr').remove();
     recalcularTotalSL();
-    // Renumerar items
     document.querySelectorAll('#detalleSalidaLlanta tr').forEach(function (tr, i) {
         var cell = tr.querySelector('.col-item');
         if (cell) cell.textContent = i + 1;
+        tr.style.zIndex = '1';
     });
     contadorDetalleSL = document.querySelectorAll('#detalleSalidaLlanta tr').length;
 }
