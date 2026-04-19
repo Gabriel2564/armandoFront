@@ -1,6 +1,6 @@
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8087/api'
-    : `${window.location.origin}/api`;
+    : 'https://armando-production.up.railway.app/api';
 
 const api = {
     llantas: {
